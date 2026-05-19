@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(conda run *)",
+      "Bash(jupyter kernelspec *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(& \"C:\\\\Users\\\\Joey\\\\anaconda3\\\\python.exe\" -c \"import celerite2; import astropy; print\\('both ok'\\)\" 2>&1)",
+      "PowerShell(& \"C:\\\\Users\\\\Joey\\\\anaconda3\\\\envs\\\\NNEnv\\\\python.exe\" -c \"import celerite2; import astropy; print\\('both ok'\\)\" 2>&1)",
+      "Bash(python -c ' *)",
+      "Bash(python -c \"import json; nb=json.load\\(open\\('WGPR.ipynb'\\)\\); [print\\(i, c['id']\\) for i,c in enumerate\\(nb['cells']\\)]\")"
+    ]
+  }
+}
