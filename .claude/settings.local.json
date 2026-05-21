@@ -7,7 +7,8 @@
       "PowerShell(& \"C:\\\\Users\\\\Joey\\\\anaconda3\\\\python.exe\" -c \"import celerite2; import astropy; print\\('both ok'\\)\" 2>&1)",
       "PowerShell(& \"C:\\\\Users\\\\Joey\\\\anaconda3\\\\envs\\\\NNEnv\\\\python.exe\" -c \"import celerite2; import astropy; print\\('both ok'\\)\" 2>&1)",
       "Bash(python -c ' *)",
-      "Bash(python -c \"import json; nb=json.load\\(open\\('WGPR.ipynb'\\)\\); [print\\(i, c['id']\\) for i,c in enumerate\\(nb['cells']\\)]\")"
+      "Bash(python -c \"import json; nb=json.load\\(open\\('WGPR.ipynb'\\)\\); [print\\(i, c['id']\\) for i,c in enumerate\\(nb['cells']\\)]\")",
+      "Bash(python -c \"import json; nb=json.load\\(open\\('WGPR.ipynb'\\)\\); [print\\(f'Cell {i}:', json.dumps\\(c.get\\('outputs',''\\)\\)[:500]\\) for i,c in enumerate\\(nb['cells']\\) if c.get\\('outputs'\\)]\")"
     ]
   }
 }
