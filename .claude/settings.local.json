@@ -9,7 +9,11 @@
       "Bash(python -c ' *)",
       "Bash(python -c \"import json; nb=json.load\\(open\\('WGPR.ipynb'\\)\\); [print\\(i, c['id']\\) for i,c in enumerate\\(nb['cells']\\)]\")",
       "Bash(python -c \"import json; nb=json.load\\(open\\('WGPR.ipynb'\\)\\); [print\\(f'Cell {i}:', json.dumps\\(c.get\\('outputs',''\\)\\)[:500]\\) for i,c in enumerate\\(nb['cells']\\) if c.get\\('outputs'\\)]\")",
-      "Bash(python -c \"import json; nb=json.load\\(open\\('WGPR2.ipynb'\\)\\); cells=nb['cells']; [print\\(f'Cell {i}: {c[\\\\\"cell_type\\\\\"]}'\\) for i,c in enumerate\\(cells\\)]\")"
+      "Bash(python -c \"import json; nb=json.load\\(open\\('WGPR2.ipynb'\\)\\); cells=nb['cells']; [print\\(f'Cell {i}: {c[\\\\\"cell_type\\\\\"]}'\\) for i,c in enumerate\\(cells\\)]\")",
+      "Bash(VenvThesis/Scripts/python -c ' *)",
+      "Bash(\"VenvThesis/Scripts/pip\" install *)",
+      "Bash(python -c \"import sys; sys.stdout.buffer.write\\(sys.stdin.buffer.read\\(\\)\\)\")",
+      "Read(//tmp/**)"
     ]
   }
 }
