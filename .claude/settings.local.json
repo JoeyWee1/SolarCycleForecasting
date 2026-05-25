@@ -13,7 +13,9 @@
       "Bash(VenvThesis/Scripts/python -c ' *)",
       "Bash(\"VenvThesis/Scripts/pip\" install *)",
       "Bash(python -c \"import sys; sys.stdout.buffer.write\\(sys.stdin.buffer.read\\(\\)\\)\")",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Joey\\\\Desktop\\\\Cambridge\\\\Work\\\\Thesis\" -Recurse -Filter \"*.pdf\")",
+      "Bash(Select-Object FullName)"
     ]
   }
 }
