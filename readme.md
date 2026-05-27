@@ -8,8 +8,11 @@
     - Plotted the spectrum kernel moving window analysis in GPR5 Moving window spectrum
 - Tried to automate prior selection using computational tools.
 - Meeting 2:
-    - Perform manual analysis on star data and compare with literature to verify pipeline.
+    - Perform manual analysis on star data and compare with literature to verify pipeline: ./manual_pipeline/
     - Use the three stars indicated in the meeting.
+        - HD201091
+        - HD81809
+        - HD160346
     - Perform LSP on them.
     - Remove the first significant peak.
     - Look at the remaining peaks.
