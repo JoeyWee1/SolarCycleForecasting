@@ -15,7 +15,10 @@
       "Bash(python -c \"import sys; sys.stdout.buffer.write\\(sys.stdin.buffer.read\\(\\)\\)\")",
       "Read(//tmp/**)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Joey\\\\Desktop\\\\Cambridge\\\\Work\\\\Thesis\" -Recurse -Filter \"*.pdf\")",
-      "Bash(Select-Object FullName)"
+      "Bash(Select-Object FullName)",
+      "Bash(python -c \"from PyAstronomy.pyasl import LombScargle; ls = LombScargle\\(\\); print\\([m for m in dir\\(ls\\) if not m.startswith\\('_'\\)]\\)\")",
+      "Bash(pip install *)",
+      "Bash(python *)"
     ]
   }
 }
