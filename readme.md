@@ -13,9 +13,16 @@
         - HD201091
         - HD81809
         - HD160346
-    - Perform LSP on them.
-    - Remove the first significant peak.
-    - Look at the remaining peaks.
+    - MPFIT them
+        - Compute LS periodogram on current residuals (initially raw data).  Fix frequency grid from original data (don't recompute each iteration).
+        - Find dominant peak:
+            - Compare with SNR and FAP
+            - Significant if peak_power > FAP threshold (and/or SNR > 4)
+            - else stop
+        - Add best_freq to accepted frequency list
+        - Simultaneous re-fit of ALL accepted frequencies
+        - Calculate new residuals
+        - Repeat with new residuals.
     - Flag and ignore window functions and aliases.
     - Write updated peak finder function.
     - Perform ARIMA analysis on the same stars to verify their failure.
