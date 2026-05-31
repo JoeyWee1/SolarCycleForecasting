@@ -322,7 +322,7 @@ def fit_peaks(df,
         print("Accepted periods and their heights")
         table = PrettyTable(["Days", "Years", "Height", "SNR"])
         for accepted_peak_period, accepted_peak_height, snr in zip(accepted_peak_periods, accepted_peak_heights, iter_SNRs):
-            table.add_row([f"{accepted_peak_period:.2f}", f"{accepted_peak_period/365:.2f}", f"{accepted_peak_height:.2f}", f"{snr:.2f}"])
+            table.add_row([f"{accepted_peak_period:.2f}", f"{accepted_peak_period/365:.2f}", f"{accepted_peak_height:.4f}", f"{snr:.2f}"])
         print(table)
 
     return accepted_peak_periods, accepted_peak_heights
