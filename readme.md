@@ -18,6 +18,7 @@
         - Find dominant peak:
             - Compare with SNR and FAP
             - Significant if peak_power > FAP threshold (and/or SNR > 4)
+            - Set a maximum period cutoff at 3x the measurement timescale like in the SM2016 paper
             - else stop
         - Add best_freq to accepted frequency list
         - Simultaneous re-fit of ALL accepted frequencies
