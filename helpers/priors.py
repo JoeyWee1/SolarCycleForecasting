@@ -105,7 +105,7 @@ def find_classify_signals(df,
         plt.show()
     
     if verbose_genpriors:
-        print("Priors")
+        print("Classified Signals")
         table = PrettyTable(["Cycle Type", "Prior Days", "Prior Years"])
         if priors.get('short'):
             table.add_row(["Short", f"{priors.get('short'):.2f}", f"{priors.get('short')/365:.2f}"])
