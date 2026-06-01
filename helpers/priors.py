@@ -16,7 +16,7 @@ from helpers.LSP_peaks import set_period_axes, fit_peaks
 
 
 
-def generate_priors(df,
+def find_classify_signals(df,
         manual_freq = 'linear', period_range = [0.1, 100*365], n_periods = 100000,  # this is all the fit_peaks stuff
         FAPs = [10,5,1,0.1], key_FAP_idx = -1, 
         threshold = 5,
@@ -116,3 +116,4 @@ def generate_priors(df,
         print(table)
     
     return priors
+
