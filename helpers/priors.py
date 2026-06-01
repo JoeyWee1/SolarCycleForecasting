@@ -115,5 +115,67 @@ def find_classify_signals(df,
             table.add_row(["Long", f"{priors.get('long'):.2f}", f"{priors.get('long')/365:.2f}"])
         print(table)
     
+    return priors # Classified signal data, not priors. This goes into the get priors func. 
+
+
+def get_priors(classified_signal_data, star_type, verbose = True):
+    '''
+    This takes in the input of the find_classify_signals function
+    and outputs the three priors. One in each range.count
+    Fills in missing ones using the SM2016 relationship.
+    Fills in missing long-term priors with 100 year guess.
+    '''
+    mu_Pmids = { # THESE COME FROM SM2016
+    'F':  {'mean_yr': 9.5,  'mean_days': 9.5  * 365},
+    'G':  {'mean_yr': 6.7,  'mean_days': 6.7  * 365},
+    'K':  {'mean_yr': 8.5,  'mean_days': 8.5  * 365},
+    'ME': {'mean_yr': 6.0,  'mean_days': 6.0  * 365},
+    'MM': {'mean_yr': 7.1,  'mean_days': 7.1  * 365},
+    }  # P_cyc
+
+    mu_Pshorts = {
+        'F':  {'mean_days': 8.6},
+        'G':  {'mean_days': 19.6},
+        'K':  {'mean_days': 27.4},
+        'ME': {'mean_days': 36.2},
+        'MM': {'mean_days': 85.4},
+    }  # P_rot
+
+    # If has all three then return all three
+    short = classified_signal_data.get('short', np.nan)
+    mid = classified_signal_data.get('mid', np.nan)
+    long = classified_signal_data.get('long', np.nan)
+
+    # Use detected if available, otherwise use SM2016 if available, else use mean for that star type
+    def _resolve(direct, derive, default):
+      if not np.isnan(direct):
+          return direct, 'found'
+      derived = derive()
+      if derived is not None:
+          return derived, 'SM2016'
+      return default, 'mean'
+
+    short_val, short_src = _resolve(
+        short,
+        lambda: SM2016_m_to_s(mid, star_type) if not np.isnan(mid) else None,
+        mu_Pshorts[star_type]['mean_days']
+    )
+    mid_val, mid_src = _resolve(
+        mid,
+        lambda: SM2016_s_to_m(short, star_type) if not np.isnan(short) else None,
+        mu_Pmids[star_type]['mean_days']
+    )
+    long_val, long_src = _resolve(long, lambda: None, 100 * 365)
+
+    priors = {'short': short_val, 'mid': mid_val, 'long': long_val}
+
+    if verbose:
+        table = PrettyTable(["Cycle Type", "Prior Days", "Prior Years", "Source"])
+        table.add_row(["Short", f"{priors.get('short'):.2f}", f"{priors.get('short')/365:.2f}", short_src])
+        table.add_row(["Mid", f"{priors.get('mid'):.2f}", f"{priors.get('mid')/365:.2f}", mid_src])
+        table.add_row(["Long", f"{priors.get('long'):.2f}", f"{priors.get('long')/365:.2f}", long_src])
+        print(table)
+
     return priors
+
 
