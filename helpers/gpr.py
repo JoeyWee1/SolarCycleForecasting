@@ -43,6 +43,7 @@ def train_gpr(
         verbose = True, plot = True, # general outputs
         loop_verbose: bool = False, loop_plot: bool = False, loop_savefigs: bool = True, # output within the loop
         results_verbose: bool = True, results_plot: bool = True, ax = None, # output the results
+        require_mid: bool = True, # discard kernel combos with no mid-range term (prevents underfitting with sparse data)
         SEED = 1701
         ):
         # Read the data into a "raw" df
@@ -85,6 +86,9 @@ def train_gpr(
 
         "3sml": (3, [priors['short'], priors['mid'], priors['long']]),
         }
+
+        if require_mid:
+                prior_combos = {k: v for k, v in prior_combos.items() if priors['mid'] in v[1]}
 
         # Set up the loop
         best_combo  = None
@@ -181,7 +185,7 @@ def train_gpr(
                                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.7))
                         
                         if loop_savefigs:
-                                loop_fig.savefig(f"./figs/gpr_{star_name}_{valid_split}_{combo_name}.png", dpi=100, bbox_inches='tight')
+                                loop_fig.savefig(f"./figs/gpr_{star_name}_{int(round(train_split * 100)):02d}_{combo_name}.png", dpi=100, bbox_inches='tight')
                                 plt.close(loop_fig)
 
                         else:
