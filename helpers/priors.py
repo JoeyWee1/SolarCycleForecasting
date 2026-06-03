@@ -13,8 +13,47 @@ from prettytable import PrettyTable
 
 from helpers.LSP_peaks import set_period_axes, fit_peaks
 
+#------------------------------
 
+def SM2016_intercepts(a):
+    '''
+    Gets the y intercept of the SM2016 formula.
+    Uses the mean values from Table 1 and Table 2 in the paper.
+    Everything in FGK order
+    '''
+    mu_Pcycs = np.array([9.5, 6.7, 8.5]) # years
+    mu_Pcycs *= 365 # now in days
 
+    mu_Prots = np.array([8.6, 19.6, 27.4])
+
+    c = np.log10(mu_Pcycs) - (1-a)*np.log10(mu_Prots)
+    return {'F': c[0], 'G': c[1], 'K': c[2]}
+
+def SM2016_s_to_m(P_rot, star_type, a = 0.89):
+    '''
+    ONLY VALID FOR FGK STARS
+    This takes in the short period and return the mid period.
+    Calculated using the SM2016 relation.
+    Slope a = 0.89 pm 0.05 betwen x-> log(1/P_rot) and y-> log(P_cyc/P_rot)
+    '''
+    c = SM2016_intercepts(a)[star_type]
+    log10_Pcyc = (1-a)* np.log10(P_rot) + c
+    P_cyc = 10 ** log10_Pcyc
+    return P_cyc
+
+def SM2016_m_to_s(P_cyc, star_type, a = 0.89):
+    '''
+    ONLY VALID FOR FGK STARS
+    This takes in the mid period and returns the short period.
+    Calculated using hte SM2016 relation.
+    Slope a = 0.89 pm 0.05 betwen x-> log(1/P_rot) and y-> log(P_cyc/P_rot)
+    '''
+    c = SM2016_intercepts(a)[star_type]
+    log10_Prot = (1/(1-a))*(np.log10(P_cyc)-c)
+    P_rot = 10 ** log10_Prot
+    return P_rot
+
+#------------------------------
 
 def find_classify_signals(df,
         manual_freq = 'linear', period_range = [0.1, 100*365], n_periods = 100000,  # this is all the fit_peaks stuff
