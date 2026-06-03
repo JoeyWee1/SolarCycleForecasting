@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from astropy.time import Time
 
-def prepare_df(data, add_prefix=False):
+def prepare_df(data, add_prefix=False, relative = True):
     '''
     Takes the raw readcsv df and adds the labels to it.
     '''
@@ -11,6 +11,8 @@ def prepare_df(data, add_prefix=False):
     if add_prefix:
         data['JD'] = data['JD'] + 2400000.0
     time_obj = Time(data["JD"].to_numpy(), format='jd', scale='tdb')
+    if relative:
+        data["JD"] = data["JD"] - data["JD"].iloc[0]    
     data["year"] = time_obj.jyear
     data["day"] = time_obj.jd
     data['datetime'] = time_obj.to_datetime(timezone=None)

@@ -39,6 +39,7 @@ def train_gpr(
         star_type: str = None, star_name: str = None,
         error_percent: float = 2.5, # the percentage error of the input
         sigma_upper_mult: float = 5.0, rho_bound_mults = [0.9, 1.1], q_bounds_in = [5, 100],
+        relative: bool = True, # Plot data with relative dates
         verbose = True, plot = True, # general outputs
         loop_verbose: bool = False, loop_plot: bool = False, loop_savefigs: bool = True, # output within the loop
         results_verbose: bool = True, results_plot: bool = True, ax = None, # output the results
@@ -48,7 +49,7 @@ def train_gpr(
         raw_df = pd.read_csv(datapath, sep=r'\s+', skip_blank_lines=True)
 
         # Prep the df adds the column names etc
-        data_df = prepare_df(raw_df, add_prefix=add_prefix)
+        data_df = prepare_df(raw_df, add_prefix=add_prefix, relative=relative)
 
         # Split the data
         dirty_train_df, valid_df, test_df = split_df(data_df,
@@ -180,7 +181,7 @@ def train_gpr(
                                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.7))
                         
                         if loop_savefigs:
-                                loop_fig.savefig(f"./figs/gpr_{star_name}_{combo_name}.png", dpi=100, bbox_inches='tight')
+                                loop_fig.savefig(f"./figs/gpr_{star_name}_{valid_split}_{combo_name}.png", dpi=100, bbox_inches='tight')
                                 plt.close(loop_fig)
 
                         else:
