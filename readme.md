@@ -28,10 +28,12 @@
     - Write updated peak finder function.
     - Finish the prior generating function:
         - Rewrite the amplitudes as functions of the rotation frequency as this is the most commonly seen.
-    - Perform GPR on the stars: GPR 6
+    - Perform GPR on the stars: GPR 6-9
+
     - Perform ARIMA on the stars
     - Detection limit analysis on the amplitudes: how loud do the different peaks need to be for our prior detector to find them. 
     - Cadence limit analysis: what is the required cadence to detect different frequencies of signal well based on our analysis.
+    
     - Write pipeline that takes in signal, finds the priors, fits the GPR, and plots it.
 
 
