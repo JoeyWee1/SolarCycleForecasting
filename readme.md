@@ -35,10 +35,10 @@
 - Meeting 3:
     - Perform window analysis on baselines.
     - Double check NaN values are imputed in the df_ops.
+    - Perform ARIMA on the baselines
 
 
     
-    - Perform ARIMA on the baselines
     - Write introduction and ARIMA chapters rough draft.
 
     - Test the pipeline on additional stars:
@@ -68,6 +68,5 @@
 
 ----------
 - Extensions:
-    - MPFIT to improve on prior selection performance.
     - Finish off the SM2016 paper to improve amplitude estimates from magnitude ratios.
     
