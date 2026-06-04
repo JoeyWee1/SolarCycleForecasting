@@ -37,9 +37,18 @@ def clean_df(train_df, tol = 3, plot = True, verbose = True):
     If plot, plots the removed values.
     If verbose, states number of removed values.
     '''
+    l1 = len(train_df)
+    train_df = train_df.dropna()
+    l2 = len(train_df)
+
+    if verbose:
+        print(f'Removed {l1 - l2} datapoints which had NaN.')
+
     med = train_df['sind'].median()
     mad = (train_df['sind'] - med).abs().median()
+
     cleaned_train_df = train_df[(train_df['sind'] - med).abs() < tol * mad]
+
 
     if verbose:
         l1 = len(train_df)
