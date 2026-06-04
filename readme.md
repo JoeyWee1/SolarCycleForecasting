@@ -34,8 +34,10 @@
 ----
 - Meeting 3:
     - Perform window analysis on baselines.
-    - Plot the prediction residuals.
     - Double check NaN values are imputed in the df_ops.
+
+
+    
     - Perform ARIMA on the baselines
     - Write introduction and ARIMA chapters rough draft.
 
@@ -56,6 +58,8 @@
     - Test on limited data stars.
 
     - Look at using joint datasets.
+
+    - Plot the prediction residuals.
 
 
 
