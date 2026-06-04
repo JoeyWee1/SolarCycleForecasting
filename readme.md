@@ -7,6 +7,7 @@
     - Next used spectrum kernel in GPR4 spectrum kernel
     - Plotted the spectrum kernel moving window analysis in GPR5 Moving window spectrum
 - Tried to automate prior selection using computational tools.
+----
 - Meeting 2:
     - Perform manual analysis on star data and compare with literature to verify pipeline: ./manual_pipeline/
     - Use the three stars indicated in the meeting.
@@ -29,12 +30,34 @@
     - Finish the prior generating function:
         - Rewrite the amplitudes as functions of the rotation frequency as this is the most commonly seen.
     - Perform GPR on the stars: GPR 6-9
+    - Pipeline that takes in signal, finds the priors, fits the GPR, and plots it.
+----
+- Meeting 3:
+    - Perform window analysis on baselines.
+    - Plot the prediction residuals.
+    - Double check NaN values are imputed in the df_ops.
+    - Perform ARIMA on the baselines
+    - Write introduction and ARIMA chapters rough draft.
 
-    - Perform ARIMA on the stars
+    - Test the pipeline on additional stars:
+        - Examine making q_long less constrained (doesn't have to be cyclical it could be instrument drift).
+        - Consider letting priors defined using the mean to have bigger bounds.
+
+
+    - Quantify minima prediction performance
+
     - Detection limit analysis on the amplitudes: how loud do the different peaks need to be for our prior detector to find them. 
     - Cadence limit analysis: what is the required cadence to detect different frequencies of signal well based on our analysis.
-    
-    - Write pipeline that takes in signal, finds the priors, fits the GPR, and plots it.
+
+    - Define N_eff based on distance from stars.
+
+    - Write test suite
+
+    - Test on limited data stars.
+
+    - Look at using joint datasets.
+
+
 
 
 
