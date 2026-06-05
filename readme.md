@@ -36,15 +36,16 @@
     - Perform window analysis on baselines.
     - Double check NaN values are imputed in the df_ops.
     - Perform ARIMA on the baselines
+    - Write introduction rough 
 
 
-    
-    - Write introduction and ARIMA chapters rough draft.
+
 
     - Test the pipeline on additional stars:
         - Examine making q_long less constrained (doesn't have to be cyclical it could be instrument drift).
         - Consider letting priors defined using the mean to have bigger bounds.
 
+    -Write ARIMA rough
 
     - Quantify minima prediction performance
 
