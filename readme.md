@@ -41,7 +41,10 @@
 
 
 
-    - Test the pipeline on additional stars:
+    - Test the pipeline on additional stars: GPR11 further baseline manual; GPR12 further baseline applied to pipeline and moving window
+
+        - These further stars MUST be ones where only one of the mid / short LSP peaks is found
+
         - Examine making q_long less constrained (doesn't have to be cyclical it could be instrument drift).
         - Consider letting priors defined using the mean to have bigger bounds.
 
