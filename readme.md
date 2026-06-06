@@ -41,7 +41,7 @@
 
 
 
-    - Test the pipeline on additional stars: GPR11 further baseline manual; GPR12 further baseline applied to pipeline and moving window
+    - Test the pipeline on additional stars: GPR11 further baseline manual; GPR12 looks at one example of each baseline combination seen in GPR11;GPR13 further baseline applied to pipeline and moving window
 
         - These further stars MUST be ones where only one of the mid / short LSP peaks is found
 
