@@ -41,14 +41,16 @@
 
 
 
-    - Test the pipeline on additional stars: GPR11 further baseline manual; GPR12 looks at one example of each baseline combination seen in GPR11;GPR13 further baseline applied to pipeline and moving window
-
-        - These further stars MUST be ones where only one of the mid / short LSP peaks is found
-
+    - Test the pipeline on additional stars: GPR11 further baseline manual; GPR12 looks at one example of each baseline combination seen in GPR11;GPR13 further baseline applied to pipeline and moving window.
+        - GPR12a updated the gpr code to include cleaning the validation set by the same limit.
+        - GPR12b has very sparse data leading to very poor predictions. I cannot pick out the actual cycle. How can we identify non-cyclical stars? Include non-cyclical mode in GPR search? Could use a linear or RBF kernel? The kernel that ended up being used should be returned and if the non-cyclical kernel is used it should be flagged so that the prediction that anytime is ok for observations should be returned.
+        
         - Examine making q_long less constrained (doesn't have to be cyclical it could be instrument drift).
         - Consider letting priors defined using the mean to have bigger bounds.
 
     -Write ARIMA rough
+
+    - Write pytests
 
     - Quantify minima prediction performance
 
@@ -57,7 +59,6 @@
 
     - Define N_eff based on distance from stars.
 
-    - Write test suite
 
     - Test on limited data stars.
 
