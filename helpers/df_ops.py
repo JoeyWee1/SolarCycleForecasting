@@ -29,9 +29,10 @@ def split_df(df, train_split=0.8, valid_split=0.19):
     return df.iloc[:train_idx].copy(), df.iloc[train_idx:valid_idx].copy(), df.iloc[valid_idx:].copy()
 
 
-def clean_df(train_df, tol = 3, plot = True, verbose = True):
+def clean_df(train_df, valid_df, tol = 3, plot = True, verbose = True):
     '''
     This uses a median absolute deviance filter to remove any crazy outliers in the training data.
+    Uses the same limit to remove ourliers in the validation data
 
     Returns a df with the outliers removed.
     If plot, plots the removed values.
@@ -48,6 +49,7 @@ def clean_df(train_df, tol = 3, plot = True, verbose = True):
     mad = (train_df['sind'] - med).abs().median()
 
     cleaned_train_df = train_df[(train_df['sind'] - med).abs() < tol * mad]
+    cleaned_valid_df = valid_df[(valid_df['sind'] - med).abs() < tol * mad]
 
 
     if verbose:
@@ -69,4 +71,4 @@ def clean_df(train_df, tol = 3, plot = True, verbose = True):
         plt.show()
         
 
-    return cleaned_train_df
+    return cleaned_train_df, cleaned_valid_df, tol * mad

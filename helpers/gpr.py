@@ -53,11 +53,11 @@ def train_gpr(
         data_df = prepare_df(raw_df, add_prefix=add_prefix, relative=relative)
 
         # Split the data
-        dirty_train_df, valid_df, test_df = split_df(data_df,
+        dirty_train_df, dirty_valid_df, test_df = split_df(data_df,
                                                      train_split=train_split, valid_split=valid_split)
 
         # Clean the dataset for outliers
-        train_df = clean_df(dirty_train_df, tol=4,
+        train_df, valid_df, _ = clean_df(dirty_train_df, dirty_valid_df, tol=4,
                                 verbose=verbose, plot=plot)
 
         # Classify signal data and get priors
