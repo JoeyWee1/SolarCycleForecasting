@@ -32,20 +32,26 @@ def NLL(log_params, gp, k, y):
     gp.recompute(quiet=True)
     return -gp.log_likelihood(y)
 
+
 def train_gpr(
-        datapath,
+        datapath, 
+        direct_bound_tol = 0.1, sm2016_bound_tol = 0.2, 
+        mean_bound_tol = 1, # in std
         add_prefix: bool = False, # whether or not to add the 240000 to the JD
         train_split: float = 0.8, valid_split: float = 0.19,
         star_type: str = None, star_name: str = None,
         error_percent: float = 2.5, # the percentage error of the input
-        sigma_upper_mult: float = 5.0, rho_bound_mults = [0.9, 1.1], q_bounds_in = [5, 100],
+        sigma_upper_mult: float = 5.0, q_bounds_in = [5, 100],
         relative: bool = True, # Plot data with relative dates
         verbose = True, plot = True, # general outputs
         loop_verbose: bool = False, loop_plot: bool = False, loop_savefigs: bool = True, # output within the loop
         results_verbose: bool = True, results_plot: bool = True, ax = None, # output the results
+        result_plot_cadence = 1, # Plot every x days
+        result_plot_extra = 100, # Plot for 100 days extra after end of validation set
         require_mid: bool = True, # discard kernel combos with no mid-range term (prevents underfitting with sparse data)
         SEED = 1701
         ):
+      
         # Read the data into a "raw" df
         raw_df = pd.read_csv(datapath, sep=r'\s+', skip_blank_lines=True)
 
@@ -64,9 +70,13 @@ def train_gpr(
         classified_signal_data = find_classify_signals(dirty_train_df,
                                                 plot_fitpeaks=plot, verbose_fitpeaks=verbose,
                                                 plot_genpriors=plot, verbose_genpriors=verbose)
-        priors = get_priors(classified_signal_data,
-                                        star_type=star_type,
-                                        verbose=verbose)
+        
+        rho_priors, rho_prior_bounds, rho_sources = get_priors(classified_signal_data,
+                                                                        star_type=star_type,
+                                                                        direct_bound_tol = direct_bound_tol, 
+                                                                        sm2016_bound_tol = sm2016_bound_tol, 
+                                                                        mean_bound_tol = mean_bound_tol,
+                                                                        verbose=verbose)
 
         #-----Do the model training and comparison---------
         train_yerr = train_df['sind'] * error_percent / 100
@@ -74,21 +84,23 @@ def train_gpr(
         train_mean = train_df['sind'].mean()
         train_std  = train_df['sind'].std()
 
-        # Define the prior combos to try
+        # Define the prior combos to try (k, [[q_priors], [rho_priors]])
         prior_combos = {
-        "1s":   (1, [priors['short']]),
-        "1m":   (1, [priors['mid']]),
-        "1l":   (1, [priors['long']]),
+                "1s":    {'k': 1, 'q_priors': None,          'cycle_keys': ['short']},
+                "1m":    {'k': 1, 'q_priors': None,          'cycle_keys': ['mid']},
+                "1l":    {'k': 1, 'q_priors': None,          'cycle_keys': ['long']},
 
-        "2sm":  (2, [priors['short'], priors['mid']]),
-        "2ml":  (2, [priors['mid'],   priors['long']]),
-        "2ls":  (2, [priors['long'],  priors['short']]),
+                "2sm":   {'k': 2, 'q_priors': None,          'cycle_keys': ['short', 'mid']},
+                "2ml":   {'k': 2, 'q_priors': None,          'cycle_keys': ['mid',   'long']},
+                "2sl":   {'k': 2, 'q_priors': None,          'cycle_keys': ['short', 'long']},
 
-        "3sml": (3, [priors['short'], priors['mid'], priors['long']]),
+                "3sml":  {'k': 3, 'q_priors': None,          'cycle_keys': ['short', 'mid', 'long']},
+
+                "const": {'k': 1, 'q_priors': "overdamped",  'cycle_keys': ['mid']},
         }
 
         if require_mid:
-                prior_combos = {k: v for k, v in prior_combos.items() if priors['mid'] in v[1]}
+                prior_combos = {key: val for key, val in prior_combos.items() if 'mid' in val['cycle_keys']}
 
         # Set up the loop
         best_combo  = None
@@ -97,12 +109,22 @@ def train_gpr(
         best_params = None
 
         # Run the loop
-        for combo_name, (k, prior_combo) in prior_combos.items():
+        for combo_name, combo_info in prior_combos.items():
+                k = combo_info['k']
+                q_prior_type = combo_info['q_priors']
+                cycle_keys = combo_info['cycle_keys']
+                
                 np.random.seed(SEED)
 
+                #---- q priors----
+                if q_prior_type == 'overdamped':
+                        q_0s     = [np.random.uniform(0, 0.5) for _ in range(k)]
+                else:
+                        q_0s     = [np.random.uniform(0.5, 1) for _ in range(k)]
+
+                #---remaining priors----
                 sigma_0s = [train_std / k for _ in range(k)]
-                rho_0s   = prior_combo
-                q_0s     = [np.random.uniform(0.5, 1) for _ in range(k)]
+                rho_0s = [rho_priors[cycle_key] for cycle_key in cycle_keys]
 
                 initial_guess = np.concatenate([
                         np.log(sigma_0s),
@@ -110,10 +132,15 @@ def train_gpr(
                         np.log(q_0s)
                 ])
 
+                #----q bounds-----
+                if q_prior_type == 'overdamped':
+                        q_bounds     = [(-np.inf, np.log(0.5)) for _ in range(k)]
+                else:
+                        q_bounds     = [(np.log(q_bounds_in[0]), np.log(q_bounds_in[1])) for _ in range(k)]
+
                 sigma_upper  = train_std * sigma_upper_mult
                 sigma_bounds = [(np.log(1e-4), np.log(sigma_upper)) for _ in range(k)]
-                rho_bounds   = [(np.log(rho * rho_bound_mults[0]), np.log(rho * rho_bound_mults[1])) for rho in rho_0s]
-                q_bounds     = [(np.log(q_bounds_in[0]), np.log(q_bounds_in[1])) for _ in range(k)]
+                rho_bounds   = np.log([rho_prior_bounds[cycle_key] for cycle_key in cycle_keys])
 
                 bounds = np.concatenate([sigma_bounds, rho_bounds, q_bounds])
 
@@ -196,18 +223,27 @@ def train_gpr(
 
         #-------Now we have the best model------
 
-        # Predict the best model once
-        mu, cov = best_gp.predict(train_df['sind'], t=valid_df['day'], return_var=True)
+        # Predict on a dense regular grid for smooth plotting
+        t_start = valid_df['day'].iloc[0]
+        t_end   = valid_df['day'].iloc[-1] + result_plot_extra
+        sampled_days = np.arange(t_start, t_end, result_plot_cadence)
+
+        mu, cov = best_gp.predict(train_df['sind'], t=sampled_days, return_var=True)
         std = np.sqrt(cov)
         results = pd.DataFrame({
                 'forecast': mu,
                 'lower':    mu - std,
                 'upper':    mu + std,
-        }, index=valid_df.index)
+        }, index=sampled_days)
+
+        # Convert sampled days to years for plotting
+        day_ref       = train_df['day'].iloc[0]
+        year_ref      = train_df['year'].iloc[0]
+        sampled_years = year_ref + (sampled_days - day_ref) / 365.25
 
         if results_verbose: # Print best model params
                 print(f"The best params were found for {best_combo} with NLPD of {best_NLPD}.")
-                (k, prior_combo) = prior_combos[best_combo]
+                k = prior_combos[best_combo]['k']
                 table = PrettyTable(["sigma", "Q", "rho (days)", "rho (years)"])
                 best_sigmas = best_params[0:k]
                 best_rhos   = best_params[k:2*k]
@@ -222,9 +258,10 @@ def train_gpr(
                         fig, ax = plt.subplots(figsize=(20, 5))
                 ax.scatter(train_df['year'], train_df['sind'], color='blue', label='Training', marker='x')
                 ax.scatter(valid_df['year'], valid_df['sind'], color='orange', label='Actual', alpha=0.5)
+
                 ax.set_title(f"Best model for {star_name} is {best_combo}")
-                ax.plot(valid_df['year'], results['forecast'], color='green', label='Predictions')
-                ax.fill_between(valid_df['year'], results['lower'], results['upper'],
+                ax.plot(sampled_years, results['forecast'], color='green', label='Predictions')
+                ax.fill_between(sampled_years, results['lower'], results['upper'],
                                 color='green', alpha=0.2, label='Uncertainties')
                 ax.legend()
                 ax.text(0.02, 0.05, f"NLPD = {best_NLPD:.4f}",

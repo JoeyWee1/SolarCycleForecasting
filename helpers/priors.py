@@ -156,65 +156,96 @@ def find_classify_signals(df,
     
     return priors # Classified signal data, not priors. This goes into the get priors func. 
 
+def get_priors(classified_signal_data, star_type, verbose = True,
+                        direct_bound_tol = 0.05, # For regular go between 0.95 and 1.05
+                        sm2016_bound_tol = 0.2, # 0.8 to 1.2
+                        mean_bound_tol = 1, # 1 std: make sure to correct for lower bound max(0, mean-meanboundtol*std)
+               ):
+        '''
+        This takes in the input of the find_classify_signals function
+        and outputs the three priors. One in each range.count
+        Fills in missing ones using the SM2016 relationship.
+        Fills in missing long-term priors with 100 year guess.
 
-def get_priors(classified_signal_data, star_type, verbose = True):
-    '''
-    This takes in the input of the find_classify_signals function
-    and outputs the three priors. One in each range.count
-    Fills in missing ones using the SM2016 relationship.
-    Fills in missing long-term priors with 100 year guess.
-    '''
-    mu_Pmids = { # THESE COME FROM SM2016
-    'F':  {'mean_yr': 9.5,  'mean_days': 9.5  * 365},
-    'G':  {'mean_yr': 6.7,  'mean_days': 6.7  * 365},
-    'K':  {'mean_yr': 8.5,  'mean_days': 8.5  * 365},
-    'ME': {'mean_yr': 6.0,  'mean_days': 6.0  * 365},
-    'MM': {'mean_yr': 7.1,  'mean_days': 7.1  * 365},
-    }  # P_cyc
-
-    mu_Pshorts = {
-        'F':  {'mean_days': 8.6},
-        'G':  {'mean_days': 19.6},
-        'K':  {'mean_days': 27.4},
-        'ME': {'mean_days': 36.2},
-        'MM': {'mean_days': 85.4},
-    }  # P_rot
-
-    # If has all three then return all three
-    short = classified_signal_data.get('short', np.nan)
-    mid = classified_signal_data.get('mid', np.nan)
-    long = classified_signal_data.get('long', np.nan)
-
-    # Use detected if available, otherwise use SM2016 if available, else use mean for that star type
-    def _resolve(direct, derive, default):
-      if not np.isnan(direct):
-          return direct, 'found'
-      derived = derive()
-      if derived is not None:
-          return derived, 'SM2016'
-      return default, 'mean'
-
-    short_val, short_src = _resolve(
-        short,
-        lambda: SM2016_m_to_s(mid, star_type) if not np.isnan(mid) else None,
-        mu_Pshorts[star_type]['mean_days']
-    )
-    mid_val, mid_src = _resolve(
-        mid,
-        lambda: SM2016_s_to_m(short, star_type) if not np.isnan(short) else None,
-        mu_Pmids[star_type]['mean_days']
-    )
-    long_val, long_src = _resolve(long, lambda: None, 100 * 365)
-
-    priors = {'short': short_val, 'mid': mid_val, 'long': long_val}
-
-    if verbose:
-        table = PrettyTable(["Cycle Type", "Prior Days", "Prior Years", "Source"])
-        table.add_row(["Short", f"{priors.get('short'):.2f}", f"{priors.get('short')/365:.2f}", short_src])
-        table.add_row(["Mid", f"{priors.get('mid'):.2f}", f"{priors.get('mid')/365:.2f}", mid_src])
-        table.add_row(["Long", f"{priors.get('long'):.2f}", f"{priors.get('long')/365:.2f}", long_src])
-        print(table)
-
-    return priors
+        Returns the priors and the bounds. Bounds are based on what tolerance we want for mean and SM2016.
+        Mean comes from a table with stds. Define mean bounds as standard deviations allowed.
+        SM2016 should be percentage based.
+        '''
+        #------- Define the means and standard deviations that are fallbacks------------
+        mu_Pmids = { # THESE COME FROM SM2016
+        'F':  {'mean_yr': 9.5,  'mean_days': 9.5  * 365, 'std_yr': 5.3, 'std_days': 5.3 * 365},
+        'G':  {'mean_yr': 6.7,  'mean_days': 6.7  * 365, 'std_yr': 3.6, 'std_days': 3.6 * 365},
+        'K':  {'mean_yr': 8.5,  'mean_days': 8.5  * 365, 'std_yr': 3.6, 'std_days': 3.6 * 365},
+        'ME': {'mean_yr': 6.0,  'mean_days': 6.0  * 365, 'std_yr': 2.9, 'std_days': 2.9 * 365},
+        'MM': {'mean_yr': 7.1,  'mean_days': 7.1  * 365, 'std_yr': 2.7, 'std_days': 2.7 * 365},
+        }  # P_cyc
 
 
+        mu_Pshorts = {  # THESE COME FROM SM2016
+        'F':  {'mean_yr': 8.6  / 365, 'mean_days': 8.6,  'std_yr': 6.2  / 365, 'std_days': 6.2},
+        'G':  {'mean_yr': 19.6 / 365, 'mean_days': 19.6, 'std_yr': 11.1 / 365, 'std_days': 11.1},
+        'K':  {'mean_yr': 27.4 / 365, 'mean_days': 27.4, 'std_yr': 15.7 / 365, 'std_days': 15.7},
+        'ME': {'mean_yr': 36.2 / 365, 'mean_days': 36.2, 'std_yr': 29.9 / 365, 'std_days': 29.9},
+        'MM': {'mean_yr': 85.4 / 365, 'mean_days': 85.4, 'std_yr': 53.4 / 365, 'std_days': 53.4},
+        }  # P_rot
+
+        #------ Now choose which ones to return----------
+
+        # If has all three then return all three
+        short = classified_signal_data.get('short', np.nan)
+        mid = classified_signal_data.get('mid', np.nan)
+        long = classified_signal_data.get('long', np.nan)
+
+        # Use detected if available, otherwise use SM2016 if available, else use mean for that star type
+        def _resolve(direct, derive, default, std):
+                # If there is a direct detection from LSP method
+                if not np.isnan(direct):
+                        direct_bounds = [direct * (1 - direct_bound_tol), direct * (1 + direct_bound_tol)]
+                        return direct, direct_bounds, 'found'
+                
+                # Otherwise check if SM2016 possible
+                derived = derive()
+
+                if derived is not None: #SM2016
+                        sm2016_bounds = [derived * (1 - sm2016_bound_tol), derived * (1 + sm2016_bound_tol)]
+                        return derived, sm2016_bounds, 'SM2016'
+                
+                # Otherwise use mean as defined in paper
+                default_bounds = [max(1, default - (mean_bound_tol * std)), default + (mean_bound_tol * std)]
+
+                return default, default_bounds, 'mean'
+
+        short_val, short_bounds, short_src = _resolve(
+                                                short,
+                                                lambda: SM2016_m_to_s(mid, star_type) if not np.isnan(mid) else None,
+                                                mu_Pshorts[star_type]['mean_days'], std = mu_Pshorts[star_type]['std_days']
+                                                )
+        mid_val, mid_bounds, mid_src = _resolve(
+                                                mid,
+                                                lambda: SM2016_s_to_m(short, star_type) if not np.isnan(short) else None,
+                                                mu_Pmids[star_type]['mean_days'], std = mu_Pmids[star_type]['std_days']
+                                                )
+        long_val, long_bounds, long_src = _resolve(
+                                                long, 
+                                                lambda: None, 
+                                                100 * 365, std = 100*365
+                                                )
+
+        #------Form priors and bounds to return--------
+
+        rho_priors = {'short': short_val, 'mid': mid_val, 'long': long_val}
+
+        # These are prios on periods so they are limited by rho_bounds
+        rho_bounds = {'short': short_bounds, 'mid': mid_bounds, 'long': long_bounds}
+
+        # Sources
+        sources = {'short': short_src, 'mid': mid_src, 'long': long_src}
+
+        if verbose:
+                table = PrettyTable(["Cycle Type", "Prior Days", "Prior Years", "Bounds Days", "Bounds Years", "Source"])
+                table.add_row(["Short", f"{rho_priors.get('short'):.2f}", f"{rho_priors.get('short')/365:.2f}", f"{rho_bounds.get('short')}", f"({rho_bounds.get('short')[0]/365:.2f}, {rho_bounds.get('short')[1]/365:.2f})", short_src])
+                table.add_row(["Mid",   f"{rho_priors.get('mid'):.2f}",   f"{rho_priors.get('mid')/365:.2f}",   f"{rho_bounds.get('mid')}",   f"({rho_bounds.get('mid')[0]/365:.2f}, {rho_bounds.get('mid')[1]/365:.2f})",   mid_src])
+                table.add_row(["Long",  f"{rho_priors.get('long'):.2f}",  f"{rho_priors.get('long')/365:.2f}",  f"{rho_bounds.get('long')}",  f"({rho_bounds.get('long')[0]/365:.2f}, {rho_bounds.get('long')[1]/365:.2f})",  long_src])
+                print(table)
+
+        return rho_priors, rho_bounds, sources 
