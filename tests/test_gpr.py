@@ -122,6 +122,34 @@ def _collect_sho_terms(kernel):
     return []
 
 
+# ── Unit tests for the kernel helper (fast, no GPR training) ─────────────────
+
+class TestCollectSHOTerms:
+    """Verify _collect_sho_terms handles single, 2-term, and nested 3-term kernels."""
+
+    def test_single_sho_term(self):
+        k = celerite_terms.SHOTerm(sigma=0.1, rho=35.0, Q=5.0)
+        leaves = _collect_sho_terms(k)
+        assert len(leaves) == 1
+        assert all(isinstance(t, celerite_terms.SHOTerm) for t in leaves)
+
+    def test_two_sho_terms(self):
+        k = celerite_terms.SHOTerm(sigma=0.1, rho=35.0, Q=5.0) + \
+            celerite_terms.SHOTerm(sigma=0.3, rho=2500.0, Q=10.0)
+        leaves = _collect_sho_terms(k)
+        assert len(leaves) == 2
+        assert all(isinstance(t, celerite_terms.SHOTerm) for t in leaves)
+
+    def test_three_sho_terms_nested(self):
+        # celerite2 builds (SHOTerm + SHOTerm) + SHOTerm = TermSum(TermSum, SHOTerm)
+        k = (celerite_terms.SHOTerm(sigma=0.1, rho=35.0,    Q=5.0) +
+             celerite_terms.SHOTerm(sigma=0.3, rho=2500.0,  Q=10.0) +
+             celerite_terms.SHOTerm(sigma=0.1, rho=10000.0, Q=5.0))
+        leaves = _collect_sho_terms(k)
+        assert len(leaves) == 3
+        assert all(isinstance(t, celerite_terms.SHOTerm) for t in leaves)
+
+
 @pytest.mark.slow
 def test_has_valid_kernel(trained_gpr):
     """The returned GP must have a non-None kernel composed of SHOTerm components."""
