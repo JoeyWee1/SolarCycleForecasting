@@ -48,12 +48,12 @@
             -Have a problem with total lack of data for HD10072. How can we quantify this?
             - Improved plotting code.
         -GPR12c motivates MCMC. Hard to quantify the quality of the fit.
-        
-        - Examine making q_long less constrained (doesn't have to be cyclical it could be instrument drift).
 
     -Write ARIMA rough
 
-    - Write MCMC
+    - Write MCMC in GPR13
+
+    - Examine making q_long less constrained (doesn't have to be cyclical it could be instrument drift).
 
     - Quantify minima prediction performance
 
