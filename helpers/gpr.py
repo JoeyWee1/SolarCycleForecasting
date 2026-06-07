@@ -257,7 +257,8 @@ def train_gpr(
                 if ax is None: # Enables passthrough
                         fig, ax = plt.subplots(figsize=(20, 5))
                 ax.scatter(train_df['year'], train_df['sind'], color='blue', label='Training', marker='x')
-                ax.scatter(valid_df['year'], valid_df['sind'], color='orange', label='Actual', alpha=0.5)
+                ax.scatter(valid_df['year'], valid_df['sind'], color='orange', label='Actual', alpha=0.5, marker = 'x')
+                
 
                 ax.set_title(f"Best model for {star_name} is {best_combo}")
                 ax.plot(sampled_years, results['forecast'], color='green', label='Predictions')

@@ -170,7 +170,7 @@ def fit_peaks(df,
 
     i = 0 # What index in resids we are presently processing
     t = df['day'] # Fixed time axis for al
-    data_timeframe = t[-1] - t[0]
+    data_timeframe = t.iloc[-1] - t.iloc[0]
     max_detectable_period = 3 * data_timeframe #  2 sinusoids typically required to fit reliably
 
     # Now calculate the FAPs
@@ -208,36 +208,36 @@ def fit_peaks(df,
 
             # Check if less than max_period
             if 1/peak_freq > max_detectable_period:
-                print(f"Peak at period {1/peak_freq:.2f} days is greater than maximum detectable period of {max_detectable_period} days.")
+                if verbose: print(f"Peak at period {1/peak_freq:.2f} days is greater than maximum detectable period of {max_detectable_period} days.")
             # Less than maxperiod check if alias
             else:
                 alias_cond, p, mult, delta = check_aliases(freq = peak_freq, accepted_freqs= accepted_peak_freqs)
                 if alias_cond == False: # This is an alias; skip freq
-                    print(f"Peak at period {1/peak_freq:.2f} days was identified to be an alias of {p:.2f} days at mult {mult:.2f} by tolerance {delta:.2f}.")
+                    if verbose: print(f"Peak at period {1/peak_freq:.2f} days was identified to be an alias of {p:.2f} days at mult {mult:.2f} by tolerance {delta:.2f}.")
 
                 else: # Not an alias; now check window
                     window_cond, window, delta = check_windows(freq = peak_freq)
                     if window_cond == False: # This is a window function; skip freq
-                        print(f"Peak at period {1/peak_freq:.2f} days was identified to be a window of {window:.2f} days by tolerance {delta:.2f}.")
-                    
+                        if verbose: print(f"Peak at period {1/peak_freq:.2f} days was identified to be a window of {window:.2f} days by tolerance {delta:.2f}.")
+
                     else: # Not a window; now check SNR
                         snr, popt, resid_lsr =  find_snr(powers, freqs, peak_freq, peak_idx, peak_height, window = 150)
                         if popt is None:
-                            print("SNR failed to fit Gaussian. Fell back to height vs average.")
+                            if verbose: print("SNR failed to fit Gaussian. Fell back to height vs average.")
 
                         if snr > threshold: # All checks passed. Append
                             accepted_peak_freqs.append(peak_freq) # Freq, height
                             accepted_peak_heights.append(peak_height)
                             found = True # indicates that we have added a frequency this time
-                            print(f"In iteration {i}, period at {1/peak_freq:.2f} days was accepted.")
+                            if verbose: print(f"In iteration {i}, period at {1/peak_freq:.2f} days was accepted.")
                             break # stops searching freqs
-                        
+
                         else: # Go to nest frequency
-                            print(f"Period of {1/peak_freq:.2f} days has SNR of {snr} < {threshold}.")
+                            if verbose: print(f"Period of {1/peak_freq:.2f} days has SNR of {snr} < {threshold}.")
 
         # if we have not found a frequency, this means that we have reached the FAP limit
         if found == False:
-            print(f"Iteration {i} did not find a frequency: terminating loop.")
+            if verbose: print(f"Iteration {i} did not find a frequency: terminating loop.")
             break
 
         else: # freq found now do the refitting for the next loop round
