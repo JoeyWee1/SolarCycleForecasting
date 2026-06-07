@@ -60,10 +60,7 @@
     - Detection limit analysis on the amplitudes: how loud do the different peaks need to be for our prior detector to find them. 
     - Cadence limit analysis: what is the required cadence to detect different frequencies of signal well based on our analysis.
 
-    - Define N_eff based on distance from stars.
-
-
-    - Test on limited data stars.
+    - Plot PSD vs LSP
 
     - Look at using joint datasets.
 
