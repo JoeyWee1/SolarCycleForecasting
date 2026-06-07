@@ -46,13 +46,14 @@
         - GPR12b has very sparse data leading to very poor predictions. I cannot pick out the actual cycle. How can we identify non-cyclical stars? Include non-cyclical mode in GPR search? Could use a linear or RBF kernel? The kernel that ended up being used should be returned and if the non-cyclical kernel is used it should be flagged so that the prediction that anytime is ok for observations should be returned.
             - also updated the prior bounds: priors defined using mean and SM2016 get bigger leeway
             -Have a problem with total lack of data for HD10072. How can we quantify this?
+            - Improved plotting code.
 
         
         - Examine making q_long less constrained (doesn't have to be cyclical it could be instrument drift).
 
     -Write ARIMA rough
 
-    - Write pytests
+    - Write MCMC
 
     - Quantify minima prediction performance
 
