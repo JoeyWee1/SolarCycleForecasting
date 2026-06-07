@@ -110,15 +110,25 @@ def test_returns_gaussian_process(trained_gpr):
     )
 
 
+def _collect_sho_terms(kernel):
+    """Recursively collect all leaf SHOTerm components from a (possibly nested) kernel."""
+    if isinstance(kernel, celerite_terms.SHOTerm):
+        return [kernel]
+    if hasattr(kernel, "terms"):
+        leaves = []
+        for t in kernel.terms:
+            leaves.extend(_collect_sho_terms(t))
+        return leaves
+    return []
+
+
 @pytest.mark.slow
 def test_has_valid_kernel(trained_gpr):
     """The returned GP must have a non-None kernel composed of SHOTerm components."""
     _, best_gp, _, _, _ = trained_gpr
     assert best_gp.kernel is not None
-    kernel = best_gp.kernel
-    # Collect all leaf terms (handles both single SHOTerm and TermSum)
-    leaf_terms = list(kernel.terms) if hasattr(kernel, "terms") else [kernel]
-    assert len(leaf_terms) >= 1
+    leaf_terms = _collect_sho_terms(best_gp.kernel)
+    assert len(leaf_terms) >= 1, "Expected at least one SHOTerm in the kernel"
     for t in leaf_terms:
         assert isinstance(t, celerite_terms.SHOTerm), (
             f"Expected SHOTerm leaf, got {type(t)}"
