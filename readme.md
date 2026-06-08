@@ -49,6 +49,7 @@
         - Use BMA to not have FPTP model selection.
     - GPR14_BMA:
         - Include model choice uncertainty
+        -  Weight BMA by NLPD. Strictly this is a bit odd given that NLPD is on the validation set but this is why we test on the test set.
 
     
 
