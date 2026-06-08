@@ -49,12 +49,12 @@
         - Use BMA to not have FPTP model selection.
     - GPR14_BMA:
         - Include model choice uncertainty
-        -  Weight BMA by NLPD. Strictly this is a bit odd given that NLPD is on the validation set but this is why we test on the test set.
+        -  Weight BMA by NLPD. Strictly this is a bit odd given that NLPD is on the validation set but this is why we test on the test set. We're strictly meant to test on the marginal likelihood for weights which is hard to calc.
 
     
 
     - GPR15_Minima:
-        - 
+        -  softmax pseudo-BMA is a computationally tractable approximation that weights models by held-out predictive performance. Acknowledge it is not theoretically equivalent to RJMCMC
 
     - Write Data rough
 
@@ -72,6 +72,8 @@
     - Look at using joint datasets.
 
     - Plot the prediction residuals.
+
+    - Implement temperature weighting for the softmax in BMA weight
 
 
 
