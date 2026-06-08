@@ -83,4 +83,5 @@
 ----------
 - Extensions:
     - Finish off the SM2016 paper to improve amplitude estimates from magnitude ratios.
+    - RJMCMC: justify not using it initially because it is hard to definet eh transitions between each. When do we add or remove a k mode. When do we stay at the same k but change the cycles involved.
     
