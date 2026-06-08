@@ -46,15 +46,18 @@
         -GPR12c motivates MCMC. Hard to quantify the quality of the fit.
     - Write MCMC in GPR13:
         - It is too expensive to run MCMC on all so use minimise to compare models first then MCMC to yield uncertainty.
+        - Use BMA to not have FPTP model selection.
+    - GPR14_BMA:
+        - Include model choice uncertainty
 
+    
 
+    - GPR15_Minima:
+        - 
 
-
-
-        - How can we guarantee this is actually best? Perform randomised start location for each. RJMCMC too complicated.
+    - Write Data rough
 
     -Write ARIMA rough
-
 
     - Examine making q_long less constrained (doesn't have to be cyclical it could be instrument drift).
 
