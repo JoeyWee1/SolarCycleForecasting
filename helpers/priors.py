@@ -242,10 +242,10 @@ def get_priors(classified_signal_data, star_type, verbose = True,
         sources = {'short': short_src, 'mid': mid_src, 'long': long_src}
 
         if verbose:
-                table = PrettyTable(["Cycle Type", "Prior Days", "Prior Years", "Bounds Days", "Bounds Years", "Source"])
-                table.add_row(["Short", f"{rho_priors.get('short'):.2f}", f"{rho_priors.get('short')/365:.2f}", f"{rho_bounds.get('short')}", f"({rho_bounds.get('short')[0]/365:.2f}, {rho_bounds.get('short')[1]/365:.2f})", short_src])
-                table.add_row(["Mid",   f"{rho_priors.get('mid'):.2f}",   f"{rho_priors.get('mid')/365:.2f}",   f"{rho_bounds.get('mid')}",   f"({rho_bounds.get('mid')[0]/365:.2f}, {rho_bounds.get('mid')[1]/365:.2f})",   mid_src])
-                table.add_row(["Long",  f"{rho_priors.get('long'):.2f}",  f"{rho_priors.get('long')/365:.2f}",  f"{rho_bounds.get('long')}",  f"({rho_bounds.get('long')[0]/365:.2f}, {rho_bounds.get('long')[1]/365:.2f})",  long_src])
-                print(table)
+            table = PrettyTable(["Cycle Type", "Prior Days", "Prior Years", "Bounds Days", "Bounds Years", "Source"])
+            table.add_row(["Short", f"{rho_priors.get('short'):.2f}", f"{rho_priors.get('short')/365:.2f}", f"({rho_bounds.get('short')[0]:.2f}, {rho_bounds.get('short')[1]:.2f})", f"({rho_bounds.get('short')[0]/365:.2f}, {rho_bounds.get('short')[1]/365:.2f})", short_src])
+            table.add_row(["Mid",   f"{rho_priors.get('mid'):.2f}",   f"{rho_priors.get('mid')/365:.2f}",   f"({rho_bounds.get('mid')[0]:.2f}, {rho_bounds.get('mid')[1]:.2f})",   f"({rho_bounds.get('mid')[0]/365:.2f}, {rho_bounds.get('mid')[1]/365:.2f})",   mid_src])
+            table.add_row(["Long",  f"{rho_priors.get('long'):.2f}",  f"{rho_priors.get('long')/365:.2f}",  f"({rho_bounds.get('long')[0]:.2f}, {rho_bounds.get('long')[1]:.2f})",  f"({rho_bounds.get('long')[0]/365:.2f}, {rho_bounds.get('long')[1]/365:.2f})",  long_src])
+            print(table)
 
         return rho_priors, rho_bounds, sources 
