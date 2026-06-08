@@ -50,6 +50,9 @@
     - GPR14_BMA:
         - Include model choice uncertainty
         -  Weight BMA by NLPD. Strictly this is a bit odd given that NLPD is on the validation set but this is why we test on the test set. We're strictly meant to test on the marginal likelihood for weights which is hard to calc.
+    - GPR14b: Did a window analysis with the scaling.
+        - We seem to be allowing a lot of functions where the phase does not line up properly.
+        - Need to consider a different loss function.
 
     
 
