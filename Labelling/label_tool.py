@@ -59,11 +59,19 @@ class Labeler:
         fpath = self.data_files[self.file_idx]
         self.fname = fpath.name
 
-        raw_df      = pd.read_csv(fpath, sep=r'\s+', skip_blank_lines=True)
-        raw_data_df = prepare_df(raw_df, add_prefix=False, relative=True)
+        raw_df = pd.read_csv(fpath, sep=r'\s+', skip_blank_lines=True)
+        try:
+            raw_data_df = prepare_df(raw_df, add_prefix=False, relative=True)
+        except Exception:
+            raw_data_df = prepare_df(raw_df, add_prefix=True, relative=True)
 
         med = raw_data_df['sind'].median()
         mad = (raw_data_df['sind'] - med).abs().median()
+
+        # Shift so day 0 = first observation in the raw file
+        day_offset = raw_data_df['day'].min()
+        raw_data_df = raw_data_df.copy()
+        raw_data_df['day'] -= day_offset
 
         self.raw_data_df = raw_data_df
         # sort by day so np.interp works correctly
