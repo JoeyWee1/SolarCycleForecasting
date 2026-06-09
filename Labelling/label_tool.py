@@ -91,7 +91,7 @@ class Labeler:
         self.step_coarse = span * 0.05    # ~5%   — coarse (Ctrl)
 
         if self.fname not in self.all_labels:
-            self.all_labels[self.fname] = {'maxima': [], 'minima': [], 'const': False}
+            self.all_labels[self.fname] = {'maxima': [], 'minima': [], 'const': False, 'bad': False}
 
         self.current_labels = self.all_labels[self.fname]
         self.history        = []
@@ -132,18 +132,19 @@ class Labeler:
         n_max    = len(self.current_labels['maxima'])
         n_min    = len(self.current_labels['minima'])
         is_const = self.current_labels.get('const', False)
-        mode_str = "[ CONST ]" if is_const else \
+        is_bad   = self.current_labels.get('bad',   False)
+        mode_str = "[ CONST ]" if is_const else "[ BAD DATA ]" if is_bad else \
                    (f"Placing: {self.mode.upper()}" if self.mode else "Press  1 = MAX   2 = MIN  to begin")
 
         self.ax.set_title(
             f"{self.fname}  ({self.file_idx + 1}/{n_files})  |  {mode_str}  |  "
             f"{n_max} maxima · {n_min} minima saved\n"
             "[←/→] fine   [Shift+←/→] medium   [Ctrl+←/→] coarse   "
-            "[Space] save   [U] undo   [,/.] prev/next   [C] const   [5] save   [Q] quit"
+            "[Space] save   [U] undo   [,/.] prev/next   [C] const   [B] bad   [5] save   [Q] quit"
         )
         self.ax.set_xlabel("Day")
         self.ax.set_ylabel("S-index")
-        self.ax.set_facecolor('#fff8e1' if is_const else 'white')
+        self.ax.set_facecolor('#fff8e1' if is_const else '#fff0f0' if is_bad else 'white')
 
         self.cursor_vline, = self.ax.plot([], [], linewidth=2.5, zorder=5, animated=True)
         self.cursor_dot,   = self.ax.plot([], [], linestyle='', markersize=14,
@@ -230,6 +231,9 @@ class Labeler:
         elif k == 'c':
             self._on_const()
 
+        elif k == 'b':
+            self._on_bad()
+
         elif k == '5':
             self.save_all()
 
@@ -243,6 +247,10 @@ class Labeler:
 
     def _on_const(self, _event=None):
         self.current_labels['const'] = not self.current_labels.get('const', False)
+        self.redraw()
+
+    def _on_bad(self, _event=None):
+        self.current_labels['bad'] = not self.current_labels.get('bad', False)
         self.redraw()
 
     def _save_label(self):

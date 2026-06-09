@@ -40,5 +40,33 @@
       8074.954574831296
     ],
     "_offset_applied": true
+  },
+  "hd10072_caii.txt": {
+    "maxima": [
+      3047.266400000094
+    ],
+    "minima": [],
+    "const": false
+  },
+  "hd10700_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": true
+  },
+  "hd10780_caii.txt": {
+    "maxima": [
+      2475.0092000001023,
+      3504.878800000126
+    ],
+    "minima": [
+      1661.080000000073,
+      3039.7764000001152
+    ],
+    "const": false
+  },
+  "hd11131_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false
   }
 }
