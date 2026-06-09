@@ -67,7 +67,11 @@
     - Use GPR13 MCMC as the baseline.
 
     - GPR16: Try training the model not to predict every datapoint but to focus on the minima and maxima.
-        - Perhaps we could take an RBF rolling average of the data; this accounts for the discontinuous measurements. And then we could apply a weighting to each point based on how extreme the data is within the validation set. This should upweight the extremes, forcing the model to get the maxima and minima right.
+        - Perhaps we could take an RBF rolling average of the data; this accounts for the discontinuous measurements. 
+        - Compare the minima
+
+
+    - Perhaps could then we could apply a weighting to each point based on how extreme the data is within the validation set. This should upweight the extremes, forcing the model to get the maxima and minima right.
 
 
 
