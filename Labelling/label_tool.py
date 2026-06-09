@@ -1,6 +1,7 @@
 import matplotlib
 matplotlib.use('TkAgg')  # Change to 'Qt5Agg' if TkAgg is unavailable
 import matplotlib.pyplot as plt
+from matplotlib.widgets import Button
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -48,6 +49,12 @@ class Labeler:
         h_in = w_in * sh / sw           # same aspect ratio as screen
         self.fig.set_size_inches(w_in, h_in)
 
+        # CONST button — bottom centre, in its own axes so it survives ax.cla()
+        self.fig.subplots_adjust(bottom=0.13)
+        ax_btn = self.fig.add_axes([0.44, 0.02, 0.12, 0.06])
+        self.btn_const = Button(ax_btn, 'CONST', color='#f0f0f0', hovercolor='#ffe082')
+        self.btn_const.on_clicked(self._on_const)
+
         mgr.window.after(100, self.redraw)
         plt.show()
 
@@ -91,7 +98,7 @@ class Labeler:
         self.step_coarse = span * 0.05    # ~5%   — coarse (Ctrl)
 
         if self.fname not in self.all_labels:
-            self.all_labels[self.fname] = {'maxima': [], 'minima': []}
+            self.all_labels[self.fname] = {'maxima': [], 'minima': [], 'const': False}
 
         self.current_labels = self.all_labels[self.fname]
         self.history        = []
@@ -134,7 +141,9 @@ class Labeler:
         n_files  = len(self.data_files)
         n_max    = len(self.current_labels['maxima'])
         n_min    = len(self.current_labels['minima'])
-        mode_str = f"Placing: {self.mode.upper()}" if self.mode else "Press  1 = MAX   2 = MIN  to begin"
+        is_const = self.current_labels.get('const', False)
+        mode_str = "[ CONST ]" if is_const else \
+                   (f"Placing: {self.mode.upper()}" if self.mode else "Press  1 = MAX   2 = MIN  to begin")
 
         self.ax.set_title(
             f"{self.fname}  ({self.file_idx + 1}/{n_files})  |  {mode_str}  |  "
@@ -145,6 +154,16 @@ class Labeler:
         self.ax.set_xlabel("Day")
         self.ax.set_ylabel("S-index")
         self.ax.legend(loc='upper right', fontsize=8)
+
+        # Shade background and update button colour to reflect const state
+        if is_const:
+            self.ax.set_facecolor('#fff8e1')
+            self.btn_const.ax.set_facecolor('#ffb300')
+            self.btn_const.label.set_text('CONST  ✓')
+        else:
+            self.ax.set_facecolor('white')
+            self.btn_const.ax.set_facecolor('#f0f0f0')
+            self.btn_const.label.set_text('CONST')
 
         self.cursor_vline, = self.ax.plot([], [], linewidth=2.5, zorder=5, animated=True)
         self.cursor_dot,   = self.ax.plot([], [], linestyle='', markersize=14,
@@ -225,6 +244,9 @@ class Labeler:
         elif k == 'n':
             self._next_file()
 
+        elif k == 'c':
+            self._on_const()
+
         elif k == '5':
             self.save_all()
 
@@ -235,6 +257,10 @@ class Labeler:
     # ------------------------------------------------------------------
     # Label management
     # ------------------------------------------------------------------
+
+    def _on_const(self, _event=None):
+        self.current_labels['const'] = not self.current_labels.get('const', False)
+        self.redraw()
 
     def _save_label(self):
         key = 'maxima' if self.mode == 'max' else 'minima'
