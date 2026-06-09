@@ -69,7 +69,7 @@
     - GPR16: Try training the model not to predict every datapoint but to focus on the minima and maxima.
         - Perhaps we could take an RBF rolling average of the data; this accounts for the discontinuous measurements. 
         - Compare the minima
-        - I am now fitting the maxima and minima to the whole dataset. It does not really matter if we catch all of them.
+        - I am now fitting the maxima and minima to the whole dataset. It does not really matter if we catch all of them. But it is a problem if we catch ones that do not exist.
 
 
     - Perhaps could then we could apply a weighting to each point based on how extreme the data is within the validation set. This should upweight the extremes, forcing the model to get the maxima and minima right.
