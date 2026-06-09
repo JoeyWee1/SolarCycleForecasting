@@ -1,7 +1,6 @@
 import matplotlib
 matplotlib.use('TkAgg')  # Change to 'Qt5Agg' if TkAgg is unavailable
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Button
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -48,12 +47,6 @@ class Labeler:
         w_in = sw * 0.90 / dpi          # 90% of screen width
         h_in = w_in * sh / sw           # same aspect ratio as screen
         self.fig.set_size_inches(w_in, h_in)
-
-        # CONST button — bottom centre, in its own axes so it survives ax.cla()
-        self.fig.subplots_adjust(bottom=0.13)
-        ax_btn = self.fig.add_axes([0.44, 0.02, 0.12, 0.06])
-        self.btn_const = Button(ax_btn, 'CONST', color='#f0f0f0', hovercolor='#ffe082')
-        self.btn_const.on_clicked(self._on_const)
 
         mgr.window.after(100, self.redraw)
         plt.show()
@@ -117,12 +110,9 @@ class Labeler:
     def _draw_static(self):
         self.ax.cla()
 
-        self.ax.plot(self.raw_data_df['day'], self.raw_data_df['sind'],
-                     '.', color='red', markersize=3, alpha=0.4,
-                     label='Outliers', rasterized=True)
         self.ax.plot(self.data_df['day'], self.data_df['sind'],
-                     '.', color='green', markersize=4,
-                     label='Clean', rasterized=True)
+                     '.', color='steelblue', markersize=4,
+                     rasterized=True)
 
         y_max = self.data_df['sind'].max()
         y_min = self.data_df['sind'].min()
@@ -149,21 +139,11 @@ class Labeler:
             f"{self.fname}  ({self.file_idx + 1}/{n_files})  |  {mode_str}  |  "
             f"{n_max} maxima · {n_min} minima saved\n"
             "[←/→] fine   [Shift+←/→] medium   [Ctrl+←/→] coarse   "
-            "[Space] save   [U] undo   [N] next file   [5] save all   [Q] quit"
+            "[Space] save   [U] undo   [,/.] prev/next   [C] const   [5] save   [Q] quit"
         )
         self.ax.set_xlabel("Day")
         self.ax.set_ylabel("S-index")
-        self.ax.legend(loc='upper right', fontsize=8)
-
-        # Shade background and update button colour to reflect const state
-        if is_const:
-            self.ax.set_facecolor('#fff8e1')
-            self.btn_const.ax.set_facecolor('#ffb300')
-            self.btn_const.label.set_text('CONST  ✓')
-        else:
-            self.ax.set_facecolor('white')
-            self.btn_const.ax.set_facecolor('#f0f0f0')
-            self.btn_const.label.set_text('CONST')
+        self.ax.set_facecolor('#fff8e1' if is_const else 'white')
 
         self.cursor_vline, = self.ax.plot([], [], linewidth=2.5, zorder=5, animated=True)
         self.cursor_dot,   = self.ax.plot([], [], linestyle='', markersize=14,
@@ -241,8 +221,11 @@ class Labeler:
         elif k == 'u':
             self._undo()
 
-        elif k == 'n':
+        elif k == '.':
             self._next_file()
+
+        elif k == ',':
+            self._prev_file()
 
         elif k == 'c':
             self._on_const()
@@ -285,6 +268,14 @@ class Labeler:
             self.save_all()
             plt.close()
             return
+        self.load_current()
+        self.redraw()
+
+    def _prev_file(self):
+        if self.file_idx == 0:
+            return
+        self.all_labels[self.fname] = dict(self.current_labels)
+        self.file_idx -= 1
         self.load_current()
         self.redraw()
 
