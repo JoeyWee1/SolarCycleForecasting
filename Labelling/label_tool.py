@@ -12,9 +12,9 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from helpers.df_ops import prepare_df
 
-DATA_DIR  = PROJECT_ROOT / "Data" / "benchmark"
+DATA_DIR  = PROJECT_ROOT / "Data" 
 SAVE_PATH = Path(__file__).resolve().parent / "labels.json"
-TOL       = 6
+TOL = 6
 
 
 class Labeler:
@@ -35,10 +35,20 @@ class Labeler:
 
         self.load_current()
 
-        self.fig, self.ax = plt.subplots(figsize=(20, 5), dpi=72)
+        self.fig, self.ax = plt.subplots()
         self.fig.canvas.mpl_connect('key_press_event', self.on_key)
-        self.redraw()
-        plt.tight_layout()
+        self.fig.canvas.mpl_connect('resize_event', self._on_resize)
+
+        # Query screen size from matplotlib's own Tk window (correct DPI awareness)
+        mgr  = plt.get_current_fig_manager()
+        sw   = mgr.window.winfo_screenwidth()
+        sh   = mgr.window.winfo_screenheight()
+        dpi  = self.fig.dpi
+        w_in = sw * 0.90 / dpi          # 90% of screen width
+        h_in = w_in * sh / sw           # same aspect ratio as screen
+        self.fig.set_size_inches(w_in, h_in)
+
+        mgr.window.after(100, self.redraw)
         plt.show()
 
     # ------------------------------------------------------------------
@@ -84,6 +94,10 @@ class Labeler:
     # ------------------------------------------------------------------
     # Drawing
     # ------------------------------------------------------------------
+
+    def _on_resize(self, event):
+        self.background = None
+        self.redraw()
 
     def _draw_static(self):
         self.ax.cla()
