@@ -12,11 +12,11 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from helpers.df_ops import prepare_df
 
-DATA_DIR    = PROJECT_ROOT / "Data" / "benchmark"
-SAVE_PATH   = Path(__file__).resolve().parent / "labels.json"
-TOL         = 6
-STEP_SMALL  = 1
-STEP_LARGE  = 10
+DATA_DIR   = PROJECT_ROOT / "Data" / "benchmark"
+SAVE_PATH  = Path(__file__).resolve().parent / "labels.json"
+TOL        = 6
+STEP_SMALL = 1
+STEP_LARGE = 10
 
 
 class Labeler:
@@ -26,17 +26,18 @@ class Labeler:
             print(f"No .txt files found in {DATA_DIR}")
             return
 
-        self.file_idx      = 0
-        self.all_labels    = {}
-        self.history       = []   # undo stack: list of ('maxima'|'minima', day)
-        self.mode          = None # 'max' | 'min' | None
-        self.cursor_pos    = 0
-        self.cursor_line   = None
-        self.cursor_marker = None
+        self.file_idx   = 0
+        self.all_labels = {}
+        self.history    = []
+        self.mode       = None
+        self.cursor_pos = 0
+        self.background = None
+        self.cursor_vline = None
+        self.cursor_dot   = None
 
         self.load_current()
 
-        self.fig, self.ax = plt.subplots(figsize=(20, 5))
+        self.fig, self.ax = plt.subplots(figsize=(20, 5), dpi=72)
         self.fig.canvas.mpl_connect('key_press_event', self.on_key)
         self.redraw()
         plt.tight_layout()
@@ -50,8 +51,8 @@ class Labeler:
         fpath = self.data_files[self.file_idx]
         self.fname = fpath.name
 
-        raw_df       = pd.read_csv(fpath, sep=r'\s+', skip_blank_lines=True)
-        raw_data_df  = prepare_df(raw_df, add_prefix=False, relative=True)
+        raw_df      = pd.read_csv(fpath, sep=r'\s+', skip_blank_lines=True)
+        raw_data_df = prepare_df(raw_df, add_prefix=False, relative=True)
 
         med = raw_data_df['sind'].median()
         mad = (raw_data_df['sind'] - med).abs().median()
@@ -68,18 +69,23 @@ class Labeler:
         self.history        = []
         self.mode           = None
         self.cursor_pos     = len(self.data_df) // 2
+        self.background     = None
 
     # ------------------------------------------------------------------
-    # Drawing
+    # Drawing — split into static (expensive) and cursor (cheap/blitted)
     # ------------------------------------------------------------------
 
-    def redraw(self):
+    def _draw_static(self):
+        """Full redraw of everything except the cursor. Captures blit background."""
         self.ax.cla()
 
-        self.ax.scatter(self.raw_data_df['day'], self.raw_data_df['sind'],
-                        color='red', s=10, alpha=0.4, label='Outliers', zorder=1)
-        self.ax.scatter(self.data_df['day'], self.data_df['sind'],
-                        color='green', s=15, label='Clean', zorder=2)
+        # plot() is much faster than scatter(); rasterized collapses to bitmap
+        self.ax.plot(self.raw_data_df['day'], self.raw_data_df['sind'],
+                     '.', color='red', markersize=3, alpha=0.4,
+                     label='Outliers', rasterized=True)
+        self.ax.plot(self.data_df['day'], self.data_df['sind'],
+                     '.', color='green', markersize=4,
+                     label='Clean', rasterized=True)
 
         y_max = self.data_df['sind'].max()
         y_min = self.data_df['sind'].min()
@@ -95,18 +101,6 @@ class Labeler:
             self.ax.text(day, y_min - y_pad, 'MIN', color='darkorange',
                          fontsize=7, ha='center', va='top', rotation=90)
 
-        self.cursor_line   = None
-        self.cursor_marker = None
-        if self.mode is not None and len(self.data_df) > 0:
-            cur_day  = self.data_df['day'].iloc[self.cursor_pos]
-            cur_sind = self.data_df['sind'].iloc[self.cursor_pos]
-            color = 'royalblue' if self.mode == 'max' else 'darkorange'
-            mkr   = '^' if self.mode == 'max' else 'v'
-            self.cursor_line   = self.ax.axvline(cur_day, color=color, linewidth=2.5, zorder=5)
-            self.cursor_marker = self.ax.scatter([cur_day], [cur_sind],
-                                                 color=color, marker=mkr,
-                                                 s=250, zorder=6, edgecolors='k')
-
         n_files  = len(self.data_files)
         n_max    = len(self.current_labels['maxima'])
         n_min    = len(self.current_labels['minima'])
@@ -121,18 +115,48 @@ class Labeler:
         self.ax.set_xlabel("Day")
         self.ax.set_ylabel("S-index")
         self.ax.legend(loc='upper right', fontsize=8)
-        self.fig.canvas.draw_idle()
 
-    def _move_cursor_artists(self):
-        """Update only the cursor without a full redraw — keeps navigation snappy."""
-        if self.cursor_line is None or self.cursor_marker is None:
-            self.redraw()
+        # Animated cursor artists — excluded from regular draw(), drawn via blit
+        self.cursor_vline, = self.ax.plot([], [], linewidth=2.5, zorder=5, animated=True)
+        self.cursor_dot,   = self.ax.plot([], [], linestyle='', markersize=14,
+                                           zorder=6, animated=True, mec='k', mew=1.5)
+
+        self.fig.canvas.draw()
+        self.background = self.fig.canvas.copy_from_bbox(self.fig.bbox)
+
+    def _blit_cursor(self):
+        """Restore background pixel buffer and draw only the cursor on top."""
+        if self.background is None:
+            self._draw_static()
             return
+
         cur_day  = self.data_df['day'].iloc[self.cursor_pos]
         cur_sind = self.data_df['sind'].iloc[self.cursor_pos]
-        self.cursor_line.set_xdata([cur_day, cur_day])
-        self.cursor_marker.set_offsets([[cur_day, cur_sind]])
-        self.fig.canvas.draw_idle()
+        y_lim    = self.ax.get_ylim()
+
+        if self.mode is None:
+            color, mkr = 'gray', 'o'
+        elif self.mode == 'max':
+            color, mkr = 'royalblue', '^'
+        else:
+            color, mkr = 'darkorange', 'v'
+
+        self.cursor_vline.set_data([cur_day, cur_day], list(y_lim))
+        self.cursor_vline.set_color(color)
+
+        self.cursor_dot.set_data([cur_day], [cur_sind])
+        self.cursor_dot.set_color(color)
+        self.cursor_dot.set_marker(mkr)
+
+        self.fig.canvas.restore_region(self.background)
+        self.ax.draw_artist(self.cursor_vline)
+        self.ax.draw_artist(self.cursor_dot)
+        self.fig.canvas.blit(self.fig.bbox)
+        self.fig.canvas.flush_events()
+
+    def redraw(self):
+        self._draw_static()
+        self._blit_cursor()
 
     # ------------------------------------------------------------------
     # Key handling
@@ -149,21 +173,21 @@ class Labeler:
             self.mode = 'min'
             self.redraw()
 
-        elif k == 'right' and self.mode:
+        elif k == 'right':
             self.cursor_pos = min(self.cursor_pos + STEP_SMALL, len(self.data_df) - 1)
-            self._move_cursor_artists()
+            self._blit_cursor()
 
-        elif k == 'left' and self.mode:
+        elif k == 'left':
             self.cursor_pos = max(self.cursor_pos - STEP_SMALL, 0)
-            self._move_cursor_artists()
+            self._blit_cursor()
 
-        elif k == 'shift+right' and self.mode:
+        elif k == 'shift+right':
             self.cursor_pos = min(self.cursor_pos + STEP_LARGE, len(self.data_df) - 1)
-            self._move_cursor_artists()
+            self._blit_cursor()
 
-        elif k == 'shift+left' and self.mode:
+        elif k == 'shift+left':
             self.cursor_pos = max(self.cursor_pos - STEP_LARGE, 0)
-            self._move_cursor_artists()
+            self._blit_cursor()
 
         elif k == ' ' and self.mode:
             self._save_label()
@@ -190,7 +214,6 @@ class Labeler:
         key     = 'maxima' if self.mode == 'max' else 'minima'
         self.current_labels[key].append(cur_day)
         self.history.append((key, cur_day))
-        # Auto-alternate
         self.mode = 'min' if self.mode == 'max' else 'max'
         self.redraw()
 
