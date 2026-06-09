@@ -12,11 +12,9 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from helpers.df_ops import prepare_df
 
-DATA_DIR   = PROJECT_ROOT / "Data" / "benchmark"
-SAVE_PATH  = Path(__file__).resolve().parent / "labels.json"
-TOL        = 6
-STEP_SMALL = 1
-STEP_LARGE = 10
+DATA_DIR  = PROJECT_ROOT / "Data" / "benchmark"
+SAVE_PATH = Path(__file__).resolve().parent / "labels.json"
+TOL       = 6
 
 
 class Labeler:
@@ -27,10 +25,10 @@ class Labeler:
             return
 
         self.file_idx   = 0
-        self.all_labels = {}
+        self.all_labels = json.load(open(SAVE_PATH)) if SAVE_PATH.exists() else {}
         self.history    = []
         self.mode       = None
-        self.cursor_pos = 0
+        self.cursor_day = 0.0
         self.background = None
         self.cursor_vline = None
         self.cursor_dot   = None
@@ -58,9 +56,21 @@ class Labeler:
         mad = (raw_data_df['sind'] - med).abs().median()
 
         self.raw_data_df = raw_data_df
-        self.data_df     = raw_data_df[
-            (raw_data_df['sind'] - med).abs() < TOL * mad
-        ].reset_index(drop=True)
+        # sort by day so np.interp works correctly
+        self.data_df = (
+            raw_data_df[(raw_data_df['sind'] - med).abs() < TOL * mad]
+            .sort_values('day')
+            .reset_index(drop=True)
+        )
+
+        self.day_min = float(self.data_df['day'].min())
+        self.day_max = float(self.data_df['day'].max())
+        span = self.day_max - self.day_min
+
+        # Three navigation step sizes in time units (days)
+        self.step_fine   = span * 0.002   # ~0.2% — fine
+        self.step_medium = span * 0.01    # ~1%   — medium (Shift)
+        self.step_coarse = span * 0.05    # ~5%   — coarse (Ctrl)
 
         if self.fname not in self.all_labels:
             self.all_labels[self.fname] = {'maxima': [], 'minima': []}
@@ -68,18 +78,16 @@ class Labeler:
         self.current_labels = self.all_labels[self.fname]
         self.history        = []
         self.mode           = None
-        self.cursor_pos     = len(self.data_df) // 2
+        self.cursor_day     = (self.day_min + self.day_max) / 2
         self.background     = None
 
     # ------------------------------------------------------------------
-    # Drawing — split into static (expensive) and cursor (cheap/blitted)
+    # Drawing
     # ------------------------------------------------------------------
 
     def _draw_static(self):
-        """Full redraw of everything except the cursor. Captures blit background."""
         self.ax.cla()
 
-        # plot() is much faster than scatter(); rasterized collapses to bitmap
         self.ax.plot(self.raw_data_df['day'], self.raw_data_df['sind'],
                      '.', color='red', markersize=3, alpha=0.4,
                      label='Outliers', rasterized=True)
@@ -109,14 +117,13 @@ class Labeler:
         self.ax.set_title(
             f"{self.fname}  ({self.file_idx + 1}/{n_files})  |  {mode_str}  |  "
             f"{n_max} maxima · {n_min} minima saved\n"
-            "[←/→] move 1 pt   [Shift+←/→] jump 10   [Space] save   "
-            "[U] undo   [N] next file   [S] save all   [Q] quit"
+            "[←/→] fine   [Shift+←/→] medium   [Ctrl+←/→] coarse   "
+            "[Space] save   [U] undo   [N] next file   [5] save all   [Q] quit"
         )
         self.ax.set_xlabel("Day")
         self.ax.set_ylabel("S-index")
         self.ax.legend(loc='upper right', fontsize=8)
 
-        # Animated cursor artists — excluded from regular draw(), drawn via blit
         self.cursor_vline, = self.ax.plot([], [], linewidth=2.5, zorder=5, animated=True)
         self.cursor_dot,   = self.ax.plot([], [], linestyle='', markersize=14,
                                            zorder=6, animated=True, mec='k', mew=1.5)
@@ -125,14 +132,16 @@ class Labeler:
         self.background = self.fig.canvas.copy_from_bbox(self.fig.bbox)
 
     def _blit_cursor(self):
-        """Restore background pixel buffer and draw only the cursor on top."""
         if self.background is None:
             self._draw_static()
             return
 
-        cur_day  = self.data_df['day'].iloc[self.cursor_pos]
-        cur_sind = self.data_df['sind'].iloc[self.cursor_pos]
-        y_lim    = self.ax.get_ylim()
+        cur_day  = self.cursor_day
+        # interpolate y — cursor floats freely between data points
+        cur_sind = float(np.interp(cur_day,
+                                   self.data_df['day'].values,
+                                   self.data_df['sind'].values))
+        y_lim = self.ax.get_ylim()
 
         if self.mode is None:
             color, mkr = 'gray', 'o'
@@ -158,6 +167,11 @@ class Labeler:
         self._draw_static()
         self._blit_cursor()
 
+    def _move(self, delta):
+        self.cursor_day = float(np.clip(self.cursor_day + delta,
+                                        self.day_min, self.day_max))
+        self._blit_cursor()
+
     # ------------------------------------------------------------------
     # Key handling
     # ------------------------------------------------------------------
@@ -173,21 +187,12 @@ class Labeler:
             self.mode = 'min'
             self.redraw()
 
-        elif k == 'right':
-            self.cursor_pos = min(self.cursor_pos + STEP_SMALL, len(self.data_df) - 1)
-            self._blit_cursor()
-
-        elif k == 'left':
-            self.cursor_pos = max(self.cursor_pos - STEP_SMALL, 0)
-            self._blit_cursor()
-
-        elif k == 'shift+right':
-            self.cursor_pos = min(self.cursor_pos + STEP_LARGE, len(self.data_df) - 1)
-            self._blit_cursor()
-
-        elif k == 'shift+left':
-            self.cursor_pos = max(self.cursor_pos - STEP_LARGE, 0)
-            self._blit_cursor()
+        elif k == 'right':            self._move(+self.step_fine)
+        elif k == 'left':             self._move(-self.step_fine)
+        elif k == 'shift+right':      self._move(+self.step_medium)
+        elif k == 'shift+left':       self._move(-self.step_medium)
+        elif k == 'ctrl+right':       self._move(+self.step_coarse)
+        elif k == 'ctrl+left':        self._move(-self.step_coarse)
 
         elif k == ' ' and self.mode:
             self._save_label()
@@ -198,7 +203,7 @@ class Labeler:
         elif k == 'n':
             self._next_file()
 
-        elif k == 's':
+        elif k == '5':
             self.save_all()
 
         elif k == 'q':
@@ -210,10 +215,9 @@ class Labeler:
     # ------------------------------------------------------------------
 
     def _save_label(self):
-        cur_day = float(self.data_df['day'].iloc[self.cursor_pos])
-        key     = 'maxima' if self.mode == 'max' else 'minima'
-        self.current_labels[key].append(cur_day)
-        self.history.append((key, cur_day))
+        key = 'maxima' if self.mode == 'max' else 'minima'
+        self.current_labels[key].append(self.cursor_day)
+        self.history.append((key, self.cursor_day))
         self.mode = 'min' if self.mode == 'max' else 'max'
         self.redraw()
 
