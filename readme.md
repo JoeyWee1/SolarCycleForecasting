@@ -52,11 +52,16 @@
         -  Weight BMA by NLPD. Strictly this is a bit odd given that NLPD is on the validation set but this is why we test on the test set. We're strictly meant to test on the marginal likelihood for weights which is hard to calc.
     - GPR14b: Did a window analysis with the scaling.
         - We seem to be allowing a lot of functions where the phase does not line up properly.
-        - Need to consider a different loss function.
+        - Need to consider a different loss function. ie CRPS {CITE: CRPS https://www.nature.com/articles/s44387-026-00073-7}
+    -GPR15:
+        - Try CRPS loss
 
-    
 
-    - GPR15_Minima:
+
+
+    - Try MSE because realistically that is the most important.    
+
+    - GPR_Minima:
         -  softmax pseudo-BMA is a computationally tractable approximation that weights models by held-out predictive performance. Acknowledge it is not theoretically equivalent to RJMCMC
 
     - Write Data rough
