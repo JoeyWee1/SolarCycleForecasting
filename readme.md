@@ -73,6 +73,9 @@
     
     - I am now thinking it would probably be easier to manually label all the peaks and troughs. There aren't that many datasets and my dear old egg Claude would probably oblige me in writing some tool to help me do it interactively.
     - Most of the star have bad data. Maybe this search could be narrowed to stars we know we want to observe.
+    - Now we can fit minima to the stars that are labelled.
+    - For these we can report the accuracy in mnima prediction.
+    - For the rest we can only report the MSE.
 
     - Perhaps could then we could apply a weighting to each point based on how extreme the data is within the validation set. This should upweight the extremes, forcing the model to get the maxima and minima right.
 
