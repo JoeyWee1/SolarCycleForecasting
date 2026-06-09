@@ -51,7 +51,8 @@
   "hd10700_caii.txt": {
     "maxima": [],
     "minima": [],
-    "const": true
+    "const": true,
+    "bad": false
   },
   "hd10780_caii.txt": {
     "maxima": [
@@ -67,6 +68,422 @@
   "hd11131_caii.txt": {
     "maxima": [],
     "minima": [],
-    "const": false
+    "const": false,
+    "bad": true
+  },
+  "hd12235_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": true,
+    "bad": false
+  },
+  "hd123_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false,
+    "bad": true
+  },
+  "hd12953_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false,
+    "bad": true
+  },
+  "hd13043_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false,
+    "bad": true
+  },
+  "hd13421_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": true,
+    "bad": false
+  },
+  "hd1388_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false,
+    "bad": true
+  },
+  "hd1461_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false,
+    "bad": true
+  },
+  "hd16160_caii.txt": {
+    "maxima": [
+      458.70280000001503,
+      5524.377200000156
+    ],
+    "minima": [
+      3470.1864000000996,
+      7638.398800000214
+    ],
+    "const": false,
+    "bad": false
+  },
+  "hd16673_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": true,
+    "bad": false
+  },
+  "hd166_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false,
+    "bad": true
+  },
+  "hd17361_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false,
+    "bad": true
+  },
+  "hd17925_caii.txt": {
+    "maxima": [],
+    "minima": [
+      4191.936000000118
+    ],
+    "const": false,
+    "bad": false
+  },
+  "hd18256_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": true,
+    "bad": false
+  },
+  "hd1835_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": true,
+    "bad": false
+  },
+  "hd19787_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false,
+    "bad": true
+  },
+  "hd20468_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false,
+    "bad": true
+  },
+  "hd20630_caii.txt": {
+    "maxima": [
+      8326.489200000276,
+      6030.215200000183,
+      4233.131200000106,
+      2196.4360000000624
+    ],
+    "minima": [
+      7288.174000000238,
+      5391.252000000156,
+      3454.394800000088
+    ],
+    "const": false,
+    "bad": false
+  },
+  "hd21552_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false,
+    "bad": true
+  },
+  "hd22049_caii.txt": {
+    "maxima": [
+      4692.386000000127,
+      6090.118000000187,
+      8805.711600000297
+    ],
+    "minima": [
+      5491.090000000161,
+      7268.206400000237
+    ],
+    "const": false,
+    "bad": false
+  },
+  "hd22072_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": true,
+    "bad": false
+  },
+  "hd22211_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false,
+    "bad": true
+  },
+  "hd23249_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": true,
+    "bad": false
+  },
+  "hd2454_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": true,
+    "bad": false
+  },
+  "hd24555_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false,
+    "bad": true
+  },
+  "hd25604_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false,
+    "bad": true
+  },
+  "hd26722_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": true,
+    "bad": false
+  },
+  "hd26913_caii.txt": {
+    "maxima": [],
+    "minima": [
+      7847.88480000021
+    ],
+    "const": false,
+    "bad": false
+  },
+  "hd26923_caii.txt": {
+    "maxima": [
+      9135.104000000254,
+      5543.347200000169
+    ],
+    "minima": [
+      7847.88480000025
+    ],
+    "const": false,
+    "bad": false
+  },
+  "hd26965_caii.txt": {
+    "maxima": [
+      0.0,
+      3773.1204000001053,
+      7745.876800000253
+    ],
+    "minima": [
+      1976.3964000000565,
+      5769.480400000193,
+      9981.80000000028
+    ],
+    "const": false,
+    "bad": false
+  },
+  "hd27022_caii.txt": {
+    "maxima": [
+      1117.0,
+      3279.4012000001035
+    ],
+    "minima": [
+      2055.716800000046
+    ],
+    "const": false,
+    "bad": false
+  },
+  "hd27348_caii.txt": {
+    "maxima": [
+      284.8996000000186,
+      2354.6114000001107
+    ],
+    "minima": [
+      1114.4602000000568
+    ],
+    "const": false,
+    "bad": false
+  },
+  "hd28307_caii.txt": {
+    "maxima": [
+      4190.700000000186
+    ],
+    "minima": [
+      1257.2100000000535
+    ],
+    "const": false,
+    "bad": false
+  },
+  "hd29139_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false,
+    "bad": true
+  },
+  "hd29317_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false,
+    "bad": true
+  },
+  "hd29645_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": true,
+    "bad": false
+  },
+  "hd30495_caii.txt": {
+    "maxima": [
+      8825.767600000332
+    ],
+    "minima": [
+      7048.633400000281
+    ],
+    "const": false,
+    "bad": false
+  },
+  "hd3229_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": true,
+    "bad": false
+  },
+  "hd3421_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false,
+    "bad": true
+  },
+  "hd3443_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": true,
+    "bad": false
+  },
+  "hd3546_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": true,
+    "bad": false
+  },
+  "hd3651_caii.txt": {
+    "maxima": [
+      3979.4824000001076,
+      9650.422400000258
+    ],
+    "minima": [
+      2226.6464000000615,
+      7588.262400000203
+    ],
+    "const": false,
+    "bad": false
+  },
+  "hd3795_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": true,
+    "bad": false
+  },
+  "hd4128_caii.txt": {
+    "maxima": [],
+    "minima": [
+      1980.483600000003
+    ],
+    "const": false,
+    "bad": false
+  },
+  "hd4307_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false,
+    "bad": true
+  },
+  "hd4628_caii.txt": {
+    "maxima": [
+      3616.6944000001113,
+      6401.964800000185,
+      9831.588800000285
+    ],
+    "minima": [
+      2182.4880000000744,
+      4739.116800000142,
+      8168.74080000023
+    ],
+    "const": false,
+    "bad": false
+  },
+  "hd4628_Mt_wilson_data.txt": {
+    "maxima": [
+      3595.9105230800046,
+      6422.7534776400025,
+      9748.45107124001
+    ],
+    "minima": [
+      2182.4890458000013,
+      4843.047120680005,
+      8293.45837404
+    ],
+    "const": false,
+    "bad": false
+  },
+  "hd6903_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": true,
+    "bad": false
+  },
+  "hd6920_caii.txt": {
+    "maxima": [],
+    "minima": [
+      7543.017000000269
+    ],
+    "const": false,
+    "bad": false
+  },
+  "hd7924_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false,
+    "bad": true
+  },
+  "hd8491_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": false,
+    "bad": true
+  },
+  "hd9562_caii.txt": {
+    "maxima": [],
+    "minima": [],
+    "const": true,
+    "bad": false
+  },
+  "sol_sind_all.txt": {
+    "maxima": [
+      4988.365212000027,
+      8711.565334,
+      12579.355752000058
+    ],
+    "minima": [
+      2964.1010680000336,
+      7084.924504000005,
+      10844.272200000032,
+      15145.833506000095
+    ],
+    "const": false,
+    "bad": false
+  },
+  "sol_sind_subset1_3.txt": {
+    "maxima": [
+      5093.6276700001135,
+      9128.365000000224
+    ],
+    "minima": [
+      7047.097780000147
+    ],
+    "const": false,
+    "bad": false
   }
 }

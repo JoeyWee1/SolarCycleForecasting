@@ -14,12 +14,13 @@ from helpers.df_ops import prepare_df
 
 DATA_DIR  = PROJECT_ROOT / "Data" 
 SAVE_PATH = Path(__file__).resolve().parent / "labels.json"
-TOL = 6
+TOL          = 6
+SMOOTH_SIGMA = 0.04   # Gaussian bandwidth as fraction of data span — increase to smooth more
 
 
 class Labeler:
     def __init__(self):
-        self.data_files = sorted(DATA_DIR.glob("*.txt"))
+        self.data_files = sorted(DATA_DIR.rglob("*.txt"))
         if not self.data_files:
             print(f"No .txt files found in {DATA_DIR}")
             return
@@ -33,7 +34,9 @@ class Labeler:
         self.cursor_vline = None
         self.cursor_dot   = None
 
-        self.load_current()
+        if not self._load_current_safe():
+            print("No loadable data files found.")
+            return
 
         self.fig, self.ax = plt.subplots()
         self.fig.canvas.mpl_connect('key_press_event', self.on_key)
@@ -48,12 +51,29 @@ class Labeler:
         h_in = w_in * sh / sw           # same aspect ratio as screen
         self.fig.set_size_inches(w_in, h_in)
 
-        mgr.window.after(100, self.redraw)
+        def _safe_redraw():
+            try:
+                self.redraw()
+            except Exception as e:
+                print(f"Redraw error: {e}")
+
+        mgr.window.after(100, _safe_redraw)
         plt.show()
 
     # ------------------------------------------------------------------
     # Data loading
     # ------------------------------------------------------------------
+
+    def _load_current_safe(self):
+        """Try to load starting from self.file_idx, skip files that fail. Returns True on success."""
+        while self.file_idx < len(self.data_files):
+            try:
+                self.load_current()
+                return True
+            except Exception as e:
+                print(f"Skipping {self.data_files[self.file_idx].name}: {e}")
+                self.file_idx += 1
+        return False
 
     def load_current(self):
         fpath = self.data_files[self.file_idx]
@@ -107,12 +127,25 @@ class Labeler:
         self.background = None
         self.redraw()
 
+    def _gaussian_smooth(self, t, y, sigma, n_eval=500):
+        t_eval = np.linspace(t.min(), t.max(), n_eval)
+        w = np.exp(-0.5 * ((t[:, None] - t_eval[None, :]) / sigma) ** 2)
+        return t_eval, (w * y[:, None]).sum(axis=0) / w.sum(axis=0)
+
     def _draw_static(self):
         self.ax.cla()
 
         self.ax.plot(self.data_df['day'], self.data_df['sind'],
                      '.', color='steelblue', markersize=4,
                      rasterized=True)
+
+        sigma   = (self.day_max - self.day_min) * SMOOTH_SIGMA
+        t_s, y_s = self._gaussian_smooth(
+            self.data_df['day'].values,
+            self.data_df['sind'].values,
+            sigma
+        )
+        self.ax.plot(t_s, y_s, '-', color='black', linewidth=1.5, alpha=0.6, zorder=3)
 
         y_max = self.data_df['sind'].max()
         y_min = self.data_df['sind'].min()
@@ -140,7 +173,7 @@ class Labeler:
             f"{self.fname}  ({self.file_idx + 1}/{n_files})  |  {mode_str}  |  "
             f"{n_max} maxima · {n_min} minima saved\n"
             "[←/→] fine   [Shift+←/→] medium   [Ctrl+←/→] coarse   "
-            "[Space] save   [U] undo   [,/.] prev/next   [C] const   [B] bad   [5] save   [Q] quit"
+            "[Space] save   [U] undo   [R] reset   [,/.] prev/next   [C] const   [B] bad   [5] save   [Q] quit"
         )
         self.ax.set_xlabel("Day")
         self.ax.set_ylabel("S-index")
@@ -228,6 +261,9 @@ class Labeler:
         elif k == ',':
             self._prev_file()
 
+        elif k == 'r':
+            self._reset()
+
         elif k == 'c':
             self._on_const()
 
@@ -244,6 +280,15 @@ class Labeler:
     # ------------------------------------------------------------------
     # Label management
     # ------------------------------------------------------------------
+
+    def _reset(self):
+        self.current_labels['maxima'] = []
+        self.current_labels['minima'] = []
+        self.current_labels['const']  = False
+        self.current_labels['bad']    = False
+        self.history = []
+        self.mode    = None
+        self.redraw()
 
     def _on_const(self, _event=None):
         self.current_labels['const'] = not self.current_labels.get('const', False)
@@ -276,16 +321,20 @@ class Labeler:
             self.save_all()
             plt.close()
             return
-        self.load_current()
-        self.redraw()
+        if self._load_current_safe():
+            self.redraw()
+        else:
+            print("No more loadable files.")
+            self.save_all()
+            plt.close()
 
     def _prev_file(self):
         if self.file_idx == 0:
             return
         self.all_labels[self.fname] = dict(self.current_labels)
         self.file_idx -= 1
-        self.load_current()
-        self.redraw()
+        if self._load_current_safe():
+            self.redraw()
 
     def save_all(self):
         self.all_labels[self.fname] = dict(self.current_labels)
