@@ -55,11 +55,22 @@
         - Need to consider a different loss function. ie CRPS {CITE: CRPS https://www.nature.com/articles/s44387-026-00073-7}
     -GPR15:
         - Try CRPS loss
+        - This still doesn't capture the loss properly.
+
+    - I think at this point the model averaging is a failed exercise. It is not really physical to define the NLPD ratio as the model average.
+    - Instead, we can choose the best model from the validation and then do the MCMC within that model. 
+    - That intra-model MCMC gives us the uncertainty in the calibration parameters for that model.
+    - Then we can retrain the whole thing on the training and validation sets to test on the test set.
+    
+    - We can upweight the maxima and minima in the validation set.
+
+    - Use GPR13 MCMC as the baseline.
+
+    - GPR16: Try training the model not to predict every datapoint but to focus on the minima and maxima.
+        - Perhaps we could take an RBF rolling average of the data; this accounts for the discontinuous measurements. And then we could apply a weighting to each point based on how extreme the data is within the validation set. This should upweight the extremes, forcing the model to get the maxima and minima right.
 
 
 
-
-    - Try MSE because realistically that is the most important.    
 
     - GPR_Minima:
         -  softmax pseudo-BMA is a computationally tractable approximation that weights models by held-out predictive performance. Acknowledge it is not theoretically equivalent to RJMCMC
