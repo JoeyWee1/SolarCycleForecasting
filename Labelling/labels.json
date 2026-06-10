@@ -396,7 +396,7 @@
       1526.2055999999827
     ],
     "const": false,
-    "bad": false
+    "bad": true
   },
   "hd4307_caii.txt": {
     "maxima": [],
