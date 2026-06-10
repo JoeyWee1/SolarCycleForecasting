@@ -102,7 +102,14 @@
                 - Report best in x years and the error on those based on interpolation.
 
         - Challenge: how to choose only the next maximum/minimum
-            - 
+        
+        -  Having now compelted GPR17, the conclusions are that fitting minima and maxima is too fragile.
+        - The 1 year suffers from a transition ringing --> start predictions earlier but disregard them
+        - We are LEAKING DATA!
+            - We ought to perform the model selection on the vaid and do this testing on the test set.
+        - Comparing with empirical can just use the time-based lookahead windows.
+
+    - GPR18: Doing the rewrites to solve this.
 
 
 
