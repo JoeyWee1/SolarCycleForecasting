@@ -5,6 +5,8 @@ from astropy.time import Time
 def prepare_df(data, add_prefix=False, relative = True):
     '''
     Takes the raw readcsv df and adds the labels to it.
+    Relative makes the JD dates relative to the start.
+    Day and year are still absolute.
     '''
     data = data.copy()
     data.columns = ["JD", "sind"]

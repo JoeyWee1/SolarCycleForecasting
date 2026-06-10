@@ -81,13 +81,21 @@
         - Fit maxmin:
             - Now fit for all the maxima and minima involved.
 
-    - Perhaps could then we could apply a weighting to each point based on how extreme the data is within the validation set. This should upweight the extremes, forcing the model to get the maxima and minima right.
+        - Test splits:
+            - Split by datetimes
+            - Split just after each maxima and minima. 
+            - Split in between those splits.
+            - How to handle several minima in the validation set? How can I find the first minimum against which to compare?
+
+
+    - Ideas on reporting results:
+        - When in the next x years will be best --> return ASAP if we are at a minimum.
+        - What SInd will it be then --> what is the concomitant improvement in observability.
+        - If prediction shows no significant change, return that it is constant. 
 
 
 
 
-    - GPR_Minima:
-        -  softmax pseudo-BMA is a computationally tractable approximation that weights models by held-out predictive performance. Acknowledge it is not theoretically equivalent to RJMCMC
 
     - Write Data rough
 
