@@ -78,21 +78,31 @@
         - For these we can report the accuracy in mnima prediction.
         - For the rest we can only report the MSE.
 
-        - Fit maxmin:
-            - Now fit for all the maxima and minima involved.
+    - GPR17: Reporting results
+        - In the final pipeline, we will report best in x = (0.25, 0.5, 1, 2, 3, 4, 5) years unless variation < tol then return that it is constant.
+        - Return expected next minimum and uncertainty thereof.
 
-        - Test splits:
-            - Split by datetimes
-            - Split just after each maxima and minima. 
-            - Split in between those splits.
-            - How to handle several minima in the validation set? How can I find the first minimum against which to compare?
+        - Use the function in GPR16
+        - In GPR17 though,
+            - Bad data:
+                - Split by % of data with fewer ie 5 splits.
+                    - Report MSE and best in x years. Report on how correct those best in x years were based on a simple interpolation of the validation set.
+            
+            - Const data marker;
+                - Split by % of data with more ie 10 splits.
+                    - Test that it reports const ie variability of predictions < tol. Tol is defined by noise.
+                    - Report best in x years and the error on those based on interpolation.
 
+            - Else: labelled as osc
+                - Split by date:
+                    - Just after labelled max/min and bound by start and finish. If there is a thing near too near the finish, disregard the finish and use the max/min.
+                    - Split at n_intervals points in between
+                - Plot the predicted next maxima/minima with axvlines
+                - Plot the labelled next maxima and minima with axvlines
+                - Report best in x years and the error on those based on interpolation.
 
-    - Ideas on reporting results:
-        - When in the next x years will be best --> return ASAP if we are at a minimum.
-        - What SInd will it be then --> what is the concomitant improvement in observability.
-        - If prediction shows no significant change, return that it is constant. 
-
+        - Challenge: how to choose only the next maximum/minimum
+            - 
 
 
 
