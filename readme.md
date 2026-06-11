@@ -115,7 +115,9 @@
         - Use the moving average to calculate the test set ground truths.
         
     - GPR19: Window analysis    
-        - Window analysis.
+        - Window analysis on one dataset.
+        - When verified that this works, check that this fails gracefully for bad datasets.
+        - Run this on the full data folder.
 
 
 
