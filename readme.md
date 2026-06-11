@@ -130,8 +130,6 @@
 
     - Examine making q_long less constrained (doesn't have to be cyclical it could be instrument drift).
 
-    - Quantify minima prediction performance
-
     - Detection limit analysis on the amplitudes: how loud do the different peaks need to be for our prior detector to find them. 
     - Cadence limit analysis: what is the required cadence to detect different frequencies of signal well based on our analysis.
 
@@ -141,7 +139,7 @@
 
     - Plot the prediction residuals.
 
-    - Implement temperature weighting for the softmax in BMA weight
+    - Compare the sunspot data with the sind data
 
 
 
