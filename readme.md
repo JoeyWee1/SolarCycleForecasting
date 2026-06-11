@@ -112,6 +112,8 @@
     - GPR18: Doing the rewrites to solve this.
         - Use lower cadence to prevent ringing. 
         - 2 phases? low cadence for short range forecasts?
+        - Use the moving average to calculate the test set ground truths.
+        - Window analysis.
 
 
 
