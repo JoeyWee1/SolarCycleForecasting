@@ -113,6 +113,8 @@
         - Use lower cadence to prevent ringing. 
         - 2 phases? low cadence for short range forecasts?
         - Use the moving average to calculate the test set ground truths.
+        
+    - GPR19: Window analysis    
         - Window analysis.
 
 
