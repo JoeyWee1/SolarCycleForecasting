@@ -110,9 +110,15 @@
         - Comparing with empirical can just use the time-based lookahead windows.
 
     - GPR18: Doing the rewrites to solve this.
+        - Use lower cadence to prevent ringing. 
+        - 2 phases? low cadence for short range forecasts?
 
 
 
+
+
+
+    - Clean the test data
 
     - Write Data rough
 
