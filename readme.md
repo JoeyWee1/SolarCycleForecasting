@@ -123,12 +123,13 @@
             - These datapoints are very redundant.
             - Perhaps can enforce a minimum gap between datapoints
 
+    - GPR20: Min gap window analysis
+        - DOWNSAMPLING REALLY IMPROVES THINGS
+        - The model is not so great at predicting when the cutoff is at a peak.
 
 
 
 
-
-    - Clean the test data
 
     - Write Data rough
 
