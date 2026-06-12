@@ -118,6 +118,10 @@
         - Window analysis on one dataset.
         - When verified that this works, check that this fails gracefully for bad datasets.
         - Run this on the full data folder.
+        - The splits always have worse data when the GPR predictions start in the middle of a block of measurments. This is because each block is relatively stationary. Makes the model assume the data is stationary. Perhaps weight the datapoints down if there are too many in a short period? 
+            - This is posterior anchoring.
+            - These datapoints are very redundant.
+            - Perhaps can enforce a minimum gap between datapoints
 
 
 
