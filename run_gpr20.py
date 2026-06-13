@@ -106,7 +106,7 @@ def truth_in_x(data_df, year_ref, day_ref, t0_year, lookahead_years,
     w       = np.exp(-0.5 * ((t_days[:, None] - t_eval[None, :]) / sigma) ** 2)
     w       = w * recency_weights[:, None]
     y_s     = (w * y[:, None]).sum(axis=0) / w.sum(axis=0)
-    t_yr_s  = year_ref + (t_eval - day_ref) / 365
+    t_yr_s  = year_ref + (t_eval - day_ref) / 365.25
     mask    = (t_yr_s >= t0_year) & (t_yr_s <= t0_year + lookahead_years)
     if not mask.any():
         return np.nan
@@ -248,8 +248,9 @@ def run_one_star(datapath, output_dir, star_type, n_windows_target, log):
     for _i in range(n_splits):
         inner_gs = gridspec.GridSpecFromSubplotSpec(
             2, 1, subplot_spec=outer_gs[_i], height_ratios=[4, 1], hspace=0)
-        plot_axes.append((fig.add_subplot(inner_gs[0]),
-                          fig.add_subplot(inner_gs[1])))
+        ax_top = fig.add_subplot(inner_gs[0])
+        ax_bot = fig.add_subplot(inner_gs[1], sharex=ax_top)  # lock x-axis to top panel
+        plot_axes.append((ax_top, ax_bot))
 
     # ── loop over splits ───────────────────────────────────────────────────────
     split_results = []
@@ -444,7 +445,7 @@ def run_one_star(datapath, output_dir, star_type, n_windows_target, log):
         is_const   = check_constant(preds, MAD)
 
         def to_year(day):
-            return t0_year + (day - t0_day) / 365
+            return t0_year + (day - t0_day) / 365.25
 
         test_window_lens = np.append(
             test_window_lens,
