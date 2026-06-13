@@ -17,4 +17,5 @@ python /home/zyw26/Thesis/run_gpr20.py \
     --data_dir /home/zyw26/Thesis/Data/mwd \
     --output_dir /home/zyw26/rds/hpc-work/gpr20_results \
     --star_type G \
+    --n_windows 5 \
     --skip_existing

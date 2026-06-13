@@ -23,6 +23,7 @@ from pathlib import Path
 
 import matplotlib
 matplotlib.use("Agg")   # no display on HPC
+import matplotlib.gridspec as gridspec
 
 import numpy as np
 import pandas as pd
@@ -142,7 +143,7 @@ def passes_checks(data_df, log):
 
 # ── main pipeline ─────────────────────────────────────────────────────────────
 
-def run_one_star(datapath, output_dir, star_type, log):
+def run_one_star(datapath, output_dir, star_type, n_windows_target, log):
     """
     Run the full GPR20 pipeline for a single star and save results.
     Returns True on success, False if skipped/failed.
@@ -167,7 +168,7 @@ def run_one_star(datapath, output_dir, star_type, log):
     n_walkers         = 32
     valid_metric      = "CRPS"
     SEED              = 1701
-    n_windows_target  = 5
+    plot_every        = 200
     pred_forward_years = 2
     low_cad           = 30
     high_cad          = 10
@@ -238,11 +239,22 @@ def run_one_star(datapath, output_dir, star_type, log):
 
     log.info("  %d window split(s)", len(train_splits))
 
+    # ── figure setup (one row per split, mirrors GPR20 notebook) ──────────────
+    n_splits  = len(train_splits)
+    fig       = plt.figure(figsize=(20, 6 * n_splits))
+    outer_gs  = gridspec.GridSpec(n_splits, 1, hspace=0.4, figure=fig)
+    plot_axes = []
+    for _i in range(n_splits):
+        inner_gs = gridspec.GridSpecFromSubplotSpec(
+            2, 1, subplot_spec=outer_gs[_i], height_ratios=[4, 1], hspace=0)
+        plot_axes.append((fig.add_subplot(inner_gs[0]),
+                          fig.add_subplot(inner_gs[1])))
+
     # ── loop over splits ───────────────────────────────────────────────────────
     split_results = []
 
-    for win_idx, (train_split, valid_split, test_split, test_window_lens) in enumerate(
-            zip(train_splits, valid_splits, test_splits, test_window_lenss)):
+    for win_idx, (train_split, valid_split, test_split, test_window_lens, (ax, ax2)) in enumerate(
+            zip(train_splits, valid_splits, test_splits, test_window_lenss, plot_axes)):
 
         log.info("  window %d/%d  (train=%.2f valid=%.2f)",
                  win_idx + 1, len(train_splits), train_split, valid_split)
@@ -447,6 +459,71 @@ def run_one_star(datapath, output_dir, star_type, log):
             for wl in test_window_lens
         ]
 
+        # ── plot (mirrors GPR20 notebook) ─────────────────────────────────────
+        plot_mask = sampled_years >= t_pred_start_year
+
+        t_day_smooth, y_smooth = gaussian_smooth(
+            data_df['day'].values, data_df['sind'].values, sigma=182.5)
+        t_year_smooth = to_year(t_day_smooth)
+
+        for s_idx, pred in enumerate(preds):
+            if s_idx % plot_every == 0:
+                ax.plot(sampled_years[plot_mask], pred[plot_mask],
+                        color='green', alpha=0.5, lw=0.75)
+
+        ax.plot(sampled_years[plot_mask], mean_pred[plot_mask],
+                color='purple', label='Mean prediction', zorder=3)
+        ax.fill_between(sampled_years[plot_mask],
+                        mean_pred[plot_mask] - total_std[plot_mask],
+                        mean_pred[plot_mask] + total_std[plot_mask],
+                        color='cyan', alpha=0.3, label='Aleatoric + Epistemic', zorder=1)
+
+        ax.scatter(retrain_df['year'], retrain_df['sind'],
+                   color='blue', label='(Re)Training', marker='x', zorder=4)
+        ax.scatter(test_df['year'], test_df['sind'],
+                   color='orange', label='Test', marker='x', alpha=0.5, zorder=4)
+        ax.plot(t_year_smooth, y_smooth,
+                label='Gaussian smoothed', color='orange', alpha=0.75)
+
+        for a in (ax, ax2):
+            a.axvline(t_pred_start_year, color='black', linestyle='--', lw=1.2, alpha=0.8, zorder=3)
+        ax.text(t_pred_start_year, 0.98, 't₀',
+                transform=ax.get_xaxis_transform(), ha='center', va='top', fontsize=8)
+
+        n_windows_plot = len(test_window_lens)
+        for w_len in test_window_lens:
+            for a in (ax, ax2):
+                a.axvline(t_pred_start_year + w_len, color='gray',
+                          linestyle=':', lw=0.8, alpha=0.6, zorder=2)
+            ax2.text(t_pred_start_year + w_len, n_windows_plot - 0.15,
+                     f'+{w_len:.1f}yr', ha='center', va='top', fontsize=7, color='gray')
+
+        for i, med in enumerate(window_truths):
+            if not np.isnan(med):
+                ax2.scatter(med, i + 0.5, marker='x', color='black', s=60, linewidths=1.5,
+                            zorder=5, label='Ground truth' if i == 0 else '_nolegend_')
+
+        for i, (med_day, (lb_day, hb_day)) in enumerate(best_ins):
+            med = to_year(med_day)
+            lb  = to_year(lb_day)
+            hb  = to_year(hb_day)
+            ax2.errorbar(med, i + 0.5,
+                         xerr=[[med - lb], [hb - med]],
+                         fmt='o', color='green', capsize=4, capthick=1.5,
+                         elinewidth=1.5, markersize=7, markeredgewidth=1.5,
+                         label='GPR prediction' if i == 0 else '_nolegend_',
+                         zorder=4)
+
+        ax2.legend(fontsize=7)
+        ax2.set_ylim(0, n_windows_plot)
+        ax2.set_yticks([i + 0.5 for i in range(n_windows_plot)])
+        ax2.set_yticklabels([f'{w:.1f}yr' for w in test_window_lens], fontsize=7)
+        ax2.set_ylabel('Lookahead', fontsize=8)
+        ax2.set_xlabel('Year')
+        ax.set_title(f'{star_name} — window {win_idx + 1}/{n_splits} '
+                     f'(train={train_split:.2f}, {best_combo_name})')
+        ax.legend(fontsize=8)
+
         split_results.append({
             "star_name":        star_name,
             "win_idx":          win_idx,
@@ -467,7 +544,15 @@ def run_one_star(datapath, output_dir, star_type, log):
             "t_pred_start_year": t_pred_start_year,
         })
 
-    # ── save ──────────────────────────────────────────────────────────────────
+    # ── save figure ───────────────────────────────────────────────────────────
+    fig.suptitle(star_name, fontsize=14)
+    fig.tight_layout()
+    plot_path = Path(output_dir) / f"{star_name}_forecast.png"
+    fig.savefig(plot_path, dpi=150, bbox_inches='tight')
+    plt.close(fig)
+    log.info("  plot  → %s", plot_path)
+
+    # ── save pickle ───────────────────────────────────────────────────────────
     with open(out_path, "wb") as f:
         pickle.dump(split_results, f)
     log.info("  saved → %s", out_path)
@@ -484,6 +569,8 @@ def main():
                         help="Directory to write per-star pickle files")
     parser.add_argument("--star_type",   default="G",
                         help="Spectral type passed to get_priors (default: G)")
+    parser.add_argument("--n_windows",  type=int, default=5,
+                        help="Target number of train/valid windows per star (default: 5)")
     parser.add_argument("--skip_existing", action="store_true",
                         help="Skip stars whose output pickle already exists")
     args = parser.parse_args()
@@ -505,6 +592,7 @@ def main():
     log.info("data_dir   : %s", args.data_dir)
     log.info("output_dir : %s", output_dir)
     log.info("star_type  : %s", args.star_type)
+    log.info("n_windows  : %d", args.n_windows)
 
     data_files = sorted(Path(args.data_dir).glob("*_caii.txt"))
     log.info("Found %d dataset files", len(data_files))
@@ -522,7 +610,7 @@ def main():
 
         log.info("[%d/%d] %s", i + 1, len(data_files), star_name)
         try:
-            ok = run_one_star(str(datapath), output_dir, args.star_type, log)
+            ok = run_one_star(str(datapath), output_dir, args.star_type, args.n_windows, log)
             if ok:
                 n_ok += 1
             else:
