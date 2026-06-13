@@ -10,9 +10,9 @@ Output files go to data/misc/ as hd{star_id}_caii.txt
 import os
 import glob
 
-INPUT_DIR  = os.path.join("data", "mount_Wilson_data")
-OUTPUT_DIR = os.path.join("data", "misc", "mwd")
-JD_OFFSET  = 44000  # converts JD relative to 2444000 → JD relative to 2400000
+INPUT_DIR  = os.path.join("data", "misc", "mount_wilson_data")
+OUTPUT_DIR = os.path.join("data", "mwd")
+JD_OFFSET  = 2444000  # converts JD relative to 2444000 → full Julian Date
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 

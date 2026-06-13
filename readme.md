@@ -126,6 +126,7 @@
     - GPR20: Min gap window analysis
         - DOWNSAMPLING REALLY IMPROVES THINGS
         - The model is not so great at predicting when the cutoff is at a peak.
+        - Testing on a few more, I think the takeaway is that the model only works well for clearly cyclical stars.
 
 
 
