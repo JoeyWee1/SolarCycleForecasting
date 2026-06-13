@@ -24,6 +24,7 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")   # no display on HPC
 import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt
 
 import numpy as np
 import pandas as pd
