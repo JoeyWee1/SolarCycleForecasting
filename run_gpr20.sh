@@ -13,7 +13,7 @@ mkdir -p /home/zyw26/rds/hpc-work/gpr20_results
 
 source /home/zyw26/Thesis/ThesisVenv/bin/activate
 
-python /home/zyw26/Thesis/run_gpr20.py \
+python /home/zyw26/Thesis/SolarCycleForecasting/run_gpr20.py \
     --data_dir /home/zyw26/Thesis/Data/mwd \
     --output_dir /home/zyw26/rds/hpc-work/gpr20_results \
     --star_type G \
