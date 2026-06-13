@@ -14,7 +14,7 @@ mkdir -p /home/zyw26/rds/hpc-work/gpr20_results
 source /home/zyw26/Thesis/ThesisVenv/bin/activate
 
 python /home/zyw26/Thesis/SolarCycleForecasting/run_gpr20.py \
-    --data_dir /home/zyw26/Thesis/Data/mwd \
+    --data_dir /home/zyw26/Thesis/SolarCycleForecasting/Data/mwd \
     --output_dir /home/zyw26/rds/hpc-work/gpr20_results \
     --star_type G \
     --n_windows 5 \
