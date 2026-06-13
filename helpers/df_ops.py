@@ -9,10 +9,15 @@ def prepare_df(data, add_prefix=False, relative = True):
     Day and year are still absolute.
     '''
     data = data.copy()
+    data = data.iloc[:, :2].copy()  # guard against files with extra columns
     data.columns = ["JD", "sind"]
+    # coerce non-numeric entries (e.g. stray header/comment rows) to NaN then drop
+    data["JD"] = pd.to_numeric(data["JD"], errors='coerce')
+    data["sind"] = pd.to_numeric(data["sind"], errors='coerce')
+    data = data.dropna(subset=["JD", "sind"]).reset_index(drop=True)
     if add_prefix:
         data['JD'] = data['JD'] + 2400000.0
-    time_obj = Time(data["JD"].to_numpy(), format='jd', scale='tdb')
+    time_obj = Time(data["JD"].to_numpy(dtype=float), format='jd', scale='tdb')
     if relative:
         data["JD"] = data["JD"] - data["JD"].iloc[0]    
     data["year"] = time_obj.jyear

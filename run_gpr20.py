@@ -176,7 +176,8 @@ def run_one_star(datapath, output_dir, star_type, n_windows_target, log):
     minimum_gap       = 2.5
 
     # ── load data ─────────────────────────────────────────────────────────────
-    raw_df  = pd.read_csv(datapath, sep=r'\s+', skip_blank_lines=True)
+    raw_df  = pd.read_csv(datapath, sep=r'\s+', skip_blank_lines=True,
+                          header=None, comment='#')
     data_df = prepare_df(raw_df, add_prefix=add_prefix, relative=relative)
 
     if not passes_checks(data_df, log):
