@@ -129,6 +129,7 @@
         - Testing on a few more, I think the takeaway is that the model only works well for clearly cyclical stars.
 
 
+
 - Change ground truth to 3 mode fitted fourier
 
 
