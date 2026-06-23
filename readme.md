@@ -129,13 +129,10 @@
         - Testing on a few more, I think the takeaway is that the model only works well for clearly cyclical stars.
 
 
-
+- Run mean is null check using augmented Dickey-Fuller test
 - Change ground truth to 3 mode fitted fourier
 
 
-    - Write Data rough
-
-    -Write ARIMA rough
 
     - Examine making q_long less constrained (doesn't have to be cyclical it could be instrument drift).
 
