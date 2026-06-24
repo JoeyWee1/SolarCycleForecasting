@@ -60,7 +60,7 @@ def find_classify_signals(df,
         FAPs = [10,5,1,0.1], key_FAP_idx = -1, 
         threshold = 5,
         plot_fitpeaks = True, verbose_fitpeaks = True,
-        s_lim = 200, m_lim = 20 * 365, 
+        s_lim = 250, m_lim = 25 * 365, 
         plot_genpriors = True, verbose_genpriors = True,
         ):
     '''
@@ -73,8 +73,8 @@ def find_classify_signals(df,
     plot: plots LSP if True
     min_period, max_period in years
     n_periods to set the resolution
-    s_lim = 150 days is approx what SM2016 says so 200 is safe
-    m_lim = 14 years so do 20 * 365 to be safe
+    s_lim = 150 days is approx what SM2016 says so 250 is safe
+    m_lim = 14 years so do 25 * 365 to be safe
     
     Returns
     The peak periods and their concomitant ranges.
@@ -228,8 +228,8 @@ def get_priors(classified_signal_data, star_type, verbose = True,
         long_val, long_bounds, long_src = _resolve(
                                                 long, 
                                                 lambda: None, 
-                                                100 * 365, std = 100*365
-                                                )
+                                                100 * 365, std = 50*365
+                                                ) # std used to be 50! if something breaks blame this
 
         #------Form priors and bounds to return--------
 
