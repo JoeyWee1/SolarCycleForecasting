@@ -128,6 +128,15 @@
         - The model is not so great at predicting when the cutoff is at a peak.
         - Testing on a few more, I think the takeaway is that the model only works well for clearly cyclical stars.
 
+    - GPR21:
+        - Instead of fitting hyperparameters by maximising likelihood on the full training   set, GPR21 iterates over inner training fractions [0.6, 0.7, 0.8, 0.9], fits on   the front portion, and scores predictive NLPD on the held-out tail.
+
+    - GPR22: 
+        - Working off GPR20 code.
+        - Introduce multiple initial condition variations.
+        - Change the ground truth mechanism to MCMC over Fourier fitting
+
+
 
 - Run mean is null check using augmented Dickey-Fuller test
 - Change ground truth to 3 mode fitted fourier
