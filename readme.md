@@ -136,6 +136,12 @@
         - Introduce multiple initial condition variations.
         - Change the ground truth mechanism to MCMC over Fourier fitting
 
+    - ONLY REPORT RESULTS WITH GOOD DATA
+    - DEAL W THE REST BY QUANTIFYING THE SENSITIVITY:
+        - GROUND TRUTH VS SENSITIVITY
+        - PRIOR ACCURACY VS AMPLITUDE AND SAMPLING RATE
+    - {CITE: Hathaway shape https://link.springer.com/article/10.1007/BF00654090}
+
 
 
 - Run mean is null check using augmented Dickey-Fuller test
