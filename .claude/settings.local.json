@@ -22,7 +22,8 @@
       "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Joey\\\\Desktop\\\\Cambridge\\\\Work\\\\Thesis\\\\Data\\\\mount_wilson_data\" -Force | ForEach-Object { $_ | Select-Object Name, @{Name=\"Type\"; Expression={if\\($_.PSIsContainer\\){\"Dir\"}else{\"File\"}}}, @{Name=\"Extension\"; Expression={$_.Extension}} })",
       "PowerShell(Get-ChildItem *)",
       "Bash(VenvThesis\\\\Scripts\\\\pip.exe freeze *)",
-      "PowerShell(& \".\\\\VenvThesis\\\\Scripts\\\\pip.exe\" freeze)"
+      "PowerShell(& \".\\\\VenvThesis\\\\Scripts\\\\pip.exe\" freeze)",
+      "WebSearch"
     ]
   }
 }
