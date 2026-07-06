@@ -245,6 +245,7 @@ def run_star(datapath, star_name, star_type='G', add_prefix=False,
 
             classified_signal_data = find_classify_signals(
                 dirty_train_df,
+                manual_freq ='log',
                 plot_fitpeaks=False, verbose_fitpeaks=False,
                 plot_genpriors=False, verbose_genpriors=False)
             rho_priors, rho_prior_bounds, _ = get_priors(
