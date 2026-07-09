@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-run_gpr24b.py
-Batch runner: apply the GPR24b lookahead pipeline to every simulated star in
+cadence_analysis.py
+Batch runner: apply the cadence analysis lookahead pipeline to every simulated star in
 Data/simulated/<rate>/ across all (or a specified) sampling-rate folders.
 
 Results are written as per-star pickle files so the run is fully resumable.

@@ -83,13 +83,59 @@ pip install -r requirements.txt
 
 ## How to Run
 ---
-There are a few key 
+There are a few key tasks the code can accomplish; we will go through them here one by one.
 
+### Predict a star
+Our predictions work on S-Index data (refer to the report for details on the S-Index).
+With a dataset of S-Index measurements and the Julian date (JD) times at which they were taken, the code can create the predictions.
+``` 
+from helpers.pipeline import run_star
+result = run_star(
+    datapath='../../Data/benchmark/HD201091_Mt_wilson_data.txt',
+    star_name='HD81809', star_type='G', add_prefix=False,
+    lookahead_years=[1, 2, 3, 5],
+    verbose=False, plot=True, # This will plot the predictions
+)
+```
+The result object contains the predictions and best times to observe in the lookahead windows.
+See documentation for details.
 
+### Evaluate pipeline performance
+In the report, we evaluated the performance of the predictions on the benchmark stars with 25 splits per dataset.
+Due to HPC failure this was not completed on the full mwd dataset. 
+A similar analysis can be performed on other data easily using star_window_analysis.py.
+``` 
+# In command line
+python analyse_star.py \ # From the Analysis folder
+    --data_dir  /path/to/Data/mwd \
+    --output_dir /path/to/results \ # Outputs one pkl per star
+    [--star_type G] \  # Star type data; here we use G because it is valid with the SM2016 relation
+    [--n_windows 5] \
+    [--skip_existing]
+```
+There is also a bash wrapper for HPC use. Edit the username for it to work.
+
+### Cadence analysis
+In the report, how the cadence affects the accuracy of the predictions is reported. 
+Due to the HPC failure this was only run with 15/100 simulated stars.
+To perform the full analysis, use cadence_analysis.py.
+```
+# All folders, all 100 stars, 5 windows:
+python cadence_analysis.py --sim_root Data/simulated --out_dir Results/simulated
+```
 
 ## Test Suite
 ---
 
+
+
+## Notes
+---
+- "RuntimeWarning: invalid value encountered in scalar subtract lnpdiff = f + nlp - state.log_prob[j]" is a common warning but does not affect the performance of the modelling. If it bothers you, you can silence it with
+```
+import warnings
+warnings.filterwarnings('ignore', message='invalid value encountered in scalar subtract')
+```
 
 
 ## Autogeneration Tools

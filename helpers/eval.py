@@ -15,7 +15,6 @@ def best_in_x(predictions, t, lookahead_years, t_start=None):
     t_end = t_start + lookahead_years * 365
     if t_end > t[-1]:
         t_end = t[-1]
-        print("t_end is after the end of the predictions. Extend prediction window!")
     mask = (t >= t_start) & (t < t_end)
     window_t = t[mask]
     min_t = window_t[np.argmin(predictions[:, mask], axis=1)]
