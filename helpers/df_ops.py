@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from astropy.time import Time
 
@@ -77,5 +78,15 @@ def clean_df(train_df, valid_df, tol = 3, plot = True, verbose = True):
         plt.tight_layout()
         plt.show()
         
-
     return cleaned_train_df, cleaned_valid_df, tol * mad
+
+def downsample_min_gap(df, minimum_gap):
+    days = df['day'].values
+    keep = np.zeros(len(days), dtype=bool)
+    keep[0] = True
+    last = days[0]
+    for i in range(1, len(days)):
+        if days[i] - last >= minimum_gap:
+            keep[i] = True
+            last = days[i]
+    return df[keep].reset_index(drop=True)
