@@ -119,7 +119,7 @@ def plot_return_errors(df, max_lookahead: int = 5):
         t.add_row([int(la), pm])
     print(t)
 
-def cadence_analysis(df, max_lookahead: int = 5, savefig = None):
+def plot_cadence_analysis(df, max_lookahead: int = 5, savefig = None):
     # Get the first max_years of lookaheads
     integer_lookaheads = sorted(df[(df['lookahead_years'] % 1 == 0) & (df['lookahead_years'] <= max_years)]['lookahead_years'].unique())
     sampling_rates_sorted = sorted(df['sampling_rate_days'].unique())
