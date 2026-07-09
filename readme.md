@@ -68,12 +68,22 @@ Thesis/
 ## Setup
 ---
 ```
+# Clone this majestic repository
+git clone git@gitlab.developers.cam.ac.uk:phy/data-intensive-science-mphil/assessments/projects/zyw26.git
 
+# Create a virtual environment
+python3 -m venv VenvStellarForecasting
+
+# Activate the virtual environment
+source VenvStellarForecasting/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
 ```
-
 
 ## How to Run
 ---
+There are a few key 
 
 
 
