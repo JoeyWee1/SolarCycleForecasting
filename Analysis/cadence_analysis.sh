@@ -36,7 +36,7 @@ N_WINDOWS=25        # number of lookahead windows per star
 # N_STARS=3         # uncomment to limit stars (useful for testing)
 # STAR_TYPE=G       # uncomment to run only one spectral type
 
-python "$REPO/run_gpr24b.py" \
+python "$REPO/Analysis/run_gpr24b.py" \
     --sim_root   "$SIM_ROOT"  \
     --out_dir    "$OUT_DIR"   \
     --n_windows  $N_WINDOWS   \
