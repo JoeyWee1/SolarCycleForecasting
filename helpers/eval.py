@@ -118,3 +118,46 @@ def plot_return_errors(df, max_lookahead: int = 5):
     for la, pm in post_means:
         t.add_row([int(la), pm])
     print(t)
+
+def cadence_analysis(df, max_lookahead: int = 5, savefig = None):
+    # Get the first max_years of lookaheads
+    integer_lookaheads = sorted(df[(df['lookahead_years'] % 1 == 0) & (df['lookahead_years'] <= max_years)]['lookahead_years'].unique())
+    sampling_rates_sorted = sorted(df['sampling_rate_days'].unique())
+
+    # Defining the plotting grid
+    n_la = len(integer_lookaheads)
+    ncols = 3
+    nrows = int(np.ceil(n_la / ncols))
+
+    # Defining the colour scale for each 
+    rate_colours = {r: c for r, c in zip(sampling_rates_sorted, plt.cm.plasma(np.linspace(0.1, 0.9, len(sampling_rates_sorted))))}
+
+    # Create axes
+    fig, axes = plt.subplots(nrows, ncols, figsize=(5 * ncols, 4 * nrows), sharey=False)
+    axes = axes.flatten()
+
+    # Loop through lookaheads
+    for ax_idx, la in enumerate(integer_lookaheads):
+        ax = axes[ax_idx]
+        # Loop through the sampling rates to plot for it
+        for rate in sampling_rates_sorted:
+            d = df[(df['lookahead_years'] == la) & (df['sampling_rate_days'] == rate)]['error'].dropna() # Drop errors
+            xs = np.linspace(0, la, 300)
+            kde_vals = gaussian_kde(d)(xs) + gaussian_kde(d)(-xs) # Absolute error
+            kde_vals /= np.trapezoid(kde_vals, xs) # Normalise to proper PDF
+            ax.plot(xs, kde_vals, color=rate_colours[rate], lw=1.5, label=f'{rate:.0f} d')
+
+        ax.set_title(f'Lookahead = {int(la)} yr')
+        ax.set_xlabel('Error Magnitude (years)')
+        ax.set_ylabel('Density')
+
+    # If there are too many grid axes
+    for ax in axes[n_la:]:
+        ax.set_visible(False)
+
+    axes[n_la - 1].legend(title='Cadence', bbox_to_anchor=(1.01, 1), loc='upper left', fontsize=8)
+
+    fig.tight_layout()
+    if savefig:
+        fig.savefig(savefig)
+    plt.show()
