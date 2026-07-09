@@ -13,7 +13,7 @@ from helpers.MCMC import lnPost_gp
 from helpers.eval import check_constant, best_in_x, fit_Fourier, truth_in_x
 
 
-def run_star(datapath, star_name, star_type='G', add_prefix=False,
+def star_window_analysis(datapath, star_name, star_type='G', add_prefix=False,
              error_percent=2.5, sigma_upper_mult=5.0, q_bounds_in=(1, 5),
              n_target_windows=5, min_gap=3, n_walkers=32,
              total_sample_count=2500, subsample=500, SEED=1701,
