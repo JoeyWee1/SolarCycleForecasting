@@ -115,6 +115,7 @@ class TestSM2016Relations:
 
 # ─────────────────────────────────────────────────────────────────────────────
 # get_priors resolver — unit tests
+# get_priors returns (rho_priors, rho_bounds, sources)
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestGetPriorsResolver:
@@ -123,26 +124,28 @@ class TestGetPriorsResolver:
     def test_all_detected_returns_unchanged(self):
         """When all three signals are detected, get_priors passes them straight through."""
         classified = {"short": 35.0, "mid": 2500.0, "long": 12000.0}
-        priors = get_priors(classified, "K", verbose=False)
-        assert priors["short"] == 35.0
-        assert priors["mid"]   == 2500.0
-        assert priors["long"]  == 12000.0
+        rho_priors, _, _ = get_priors(classified, "K", verbose=False)
+        assert rho_priors["short"] == 35.0
+        assert rho_priors["mid"]   == 2500.0
+        assert rho_priors["long"]  == 12000.0
 
     def test_missing_mid_derived_from_short_via_sm2016(self):
         """When mid is absent but short is present, mid is derived via SM2016."""
         p_rot = SM2016_MEANS["K"]["P_rot"]
         classified = {"short": p_rot}
-        priors = get_priors(classified, "K", verbose=False)
+        rho_priors, _, sources = get_priors(classified, "K", verbose=False)
         expected_mid = SM2016_s_to_m(p_rot, "K")
-        assert abs(priors["mid"] - expected_mid) < 0.01
+        assert abs(rho_priors["mid"] - expected_mid) < 0.01
+        assert sources["mid"] == "SM2016"
 
     def test_missing_short_derived_from_mid_via_sm2016(self):
         """When short is absent but mid is present, short is derived via SM2016."""
         p_cyc = SM2016_MEANS["K"]["P_cyc_yr"] * 365
         classified = {"mid": p_cyc}
-        priors = get_priors(classified, "K", verbose=False)
+        rho_priors, _, sources = get_priors(classified, "K", verbose=False)
         expected_short = SM2016_m_to_s(p_cyc, "K")
-        assert abs(priors["short"] - expected_short) < 0.01
+        assert abs(rho_priors["short"] - expected_short) < 0.01
+        assert sources["short"] == "SM2016"
 
     @pytest.mark.parametrize("star_type,expected_short,expected_mid_yr", [
         ("F", 8.6,  9.5),
@@ -151,28 +154,65 @@ class TestGetPriorsResolver:
     ])
     def test_nothing_detected_uses_sm2016_means(self, star_type, expected_short, expected_mid_yr):
         """When nothing is detected, fall back to star-type mean rotation and cycle periods."""
-        priors = get_priors({}, star_type, verbose=False)
-        assert abs(priors["short"] - expected_short) < 0.01, (
-            f"{star_type}: short expected {expected_short}, got {priors['short']:.2f}"
+        rho_priors, _, sources = get_priors({}, star_type, verbose=False)
+        assert abs(rho_priors["short"] - expected_short) < 0.01, (
+            f"{star_type}: short expected {expected_short}, got {rho_priors['short']:.2f}"
         )
-        assert abs(priors["mid"] - expected_mid_yr * 365) < 1.0, (
-            f"{star_type}: mid expected {expected_mid_yr * 365:.0f} d, got {priors['mid']:.0f} d"
+        assert abs(rho_priors["mid"] - expected_mid_yr * 365) < 1.0, (
+            f"{star_type}: mid expected {expected_mid_yr * 365:.0f} d, got {rho_priors['mid']:.0f} d"
         )
+        assert sources["short"] == "mean"
+        assert sources["mid"]   == "mean"
 
     def test_missing_long_defaults_to_100_years(self):
         """Undetected long period defaults to 100 years (36 500 days)."""
-        priors = get_priors({"short": 35.0, "mid": 2500.0}, "K", verbose=False)
-        assert abs(priors["long"] - 100 * 365) < 1.0
+        rho_priors, _, _ = get_priors({"short": 35.0, "mid": 2500.0}, "K", verbose=False)
+        assert abs(rho_priors["long"] - 100 * 365) < 1.0
 
     def test_all_priors_positive(self):
         """Every prior returned by get_priors must be a positive number."""
-        priors = get_priors({}, "G", verbose=False)
-        assert all(v > 0 for v in priors.values()), f"Non-positive prior: {priors}"
+        rho_priors, _, _ = get_priors({}, "G", verbose=False)
+        assert all(v > 0 for v in rho_priors.values()), f"Non-positive prior: {rho_priors}"
 
     def test_returns_all_three_keys(self):
-        """get_priors must always return 'short', 'mid', and 'long'."""
-        priors = get_priors({}, "G", verbose=False)
-        assert set(priors.keys()) == {"short", "mid", "long"}
+        """get_priors must always return 'short', 'mid', and 'long' in rho_priors."""
+        rho_priors, _, _ = get_priors({}, "G", verbose=False)
+        assert set(rho_priors.keys()) == {"short", "mid", "long"}
+
+    def test_returns_three_tuple(self):
+        """get_priors must return a 3-tuple of (priors, bounds, sources)."""
+        result = get_priors({}, "G", verbose=False)
+        assert len(result) == 3
+
+    def test_bounds_contain_prior_value(self):
+        """Each prior value must lie within its own bounds."""
+        classified = {"short": 35.0, "mid": 2500.0, "long": 12000.0}
+        rho_priors, rho_bounds, _ = get_priors(classified, "K", verbose=False)
+        for key in ("short", "mid", "long"):
+            lb, ub = rho_bounds[key]
+            assert lb <= rho_priors[key] <= ub, (
+                f"{key}: prior {rho_priors[key]:.1f} not in bounds [{lb:.1f}, {ub:.1f}]"
+            )
+
+    def test_bounds_lower_less_than_upper(self):
+        """Lower bound must be strictly less than upper bound for each period."""
+        rho_priors, rho_bounds, _ = get_priors({}, "G", verbose=False)
+        for key in ("short", "mid", "long"):
+            lb, ub = rho_bounds[key]
+            assert lb < ub, f"{key}: lower bound {lb:.1f} >= upper bound {ub:.1f}"
+
+    def test_direct_detection_source_is_found(self):
+        """Directly detected periods must report source='found'."""
+        classified = {"short": 35.0, "mid": 2500.0, "long": 12000.0}
+        _, _, sources = get_priors(classified, "K", verbose=False)
+        assert sources["short"] == "found"
+        assert sources["mid"]   == "found"
+        assert sources["long"]  == "found"
+
+    def test_sources_keys_match_priors_keys(self):
+        """sources dict must have the same keys as rho_priors."""
+        rho_priors, _, sources = get_priors({}, "G", verbose=False)
+        assert set(sources.keys()) == set(rho_priors.keys())
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -197,8 +237,8 @@ def benchmark_priors(request):
         plot_fitpeaks=False, verbose_fitpeaks=False,
         plot_genpriors=False, verbose_genpriors=False,
     )
-    priors = get_priors(classified, info["star_type"], verbose=False)
-    return star_name, info, classified, priors
+    rho_priors, rho_bounds, sources = get_priors(classified, info["star_type"], verbose=False)
+    return star_name, info, classified, rho_priors, rho_bounds, sources
 
 
 _SHORT_TOL = 0.20  # 20% relative tolerance on rotation period
@@ -208,7 +248,7 @@ _MID_TOL   = 0.20  # 20% relative tolerance on cycle period
 @pytest.mark.slow
 def test_short_period_detected(benchmark_priors):
     """find_classify_signals must detect a short (rotation) period for each benchmark star."""
-    star_name, _, classified, _ = benchmark_priors
+    star_name, _, classified, _, _, _ = benchmark_priors
     assert "short" in classified, (
         f"{star_name}: no short-range signal detected — LSP may have missed the rotation period"
     )
@@ -217,7 +257,7 @@ def test_short_period_detected(benchmark_priors):
 @pytest.mark.slow
 def test_mid_period_detected(benchmark_priors):
     """find_classify_signals must detect a mid (cycle) period for each benchmark star."""
-    star_name, _, classified, _ = benchmark_priors
+    star_name, _, classified, _, _, _ = benchmark_priors
     assert "mid" in classified, (
         f"{star_name}: no mid-range signal detected — LSP may have missed the activity cycle"
     )
@@ -226,9 +266,9 @@ def test_mid_period_detected(benchmark_priors):
 @pytest.mark.slow
 def test_short_prior_near_literature(benchmark_priors):
     """The detected short prior must be within 20% of the published rotation period."""
-    star_name, info, _, priors = benchmark_priors
+    star_name, info, _, rho_priors, _, _ = benchmark_priors
     lit = info["lit_short_days"]
-    got = priors["short"]
+    got = rho_priors["short"]
     rel_err = abs(got - lit) / lit
     assert rel_err < _SHORT_TOL, (
         f"{star_name}: short prior = {got:.2f} d, literature = {lit} d "
@@ -239,9 +279,9 @@ def test_short_prior_near_literature(benchmark_priors):
 @pytest.mark.slow
 def test_mid_prior_near_literature(benchmark_priors):
     """The detected mid prior must be within 20% of the published activity cycle period."""
-    star_name, info, _, priors = benchmark_priors
+    star_name, info, _, rho_priors, _, _ = benchmark_priors
     lit = info["lit_mid_days"]
-    got = priors["mid"]
+    got = rho_priors["mid"]
     rel_err = abs(got - lit) / lit
     assert rel_err < _MID_TOL, (
         f"{star_name}: mid prior = {got:.0f} d ({got / 365:.2f} yr), "
@@ -253,25 +293,36 @@ def test_mid_prior_near_literature(benchmark_priors):
 @pytest.mark.slow
 def test_short_prior_in_short_range(benchmark_priors):
     """Short prior must sit within the short-range window (≤ 200 d)."""
-    star_name, _, _, priors = benchmark_priors
-    assert priors["short"] <= 200, (
-        f"{star_name}: short prior {priors['short']:.1f} d exceeds the 200 d threshold"
+    star_name, _, _, rho_priors, _, _ = benchmark_priors
+    assert rho_priors["short"] <= 200, (
+        f"{star_name}: short prior {rho_priors['short']:.1f} d exceeds the 200 d threshold"
     )
 
 
 @pytest.mark.slow
 def test_mid_prior_in_mid_range(benchmark_priors):
     """Mid prior must sit within the mid-range window (200 d < P ≤ 7 300 d)."""
-    star_name, _, _, priors = benchmark_priors
-    assert 200 < priors["mid"] <= 20 * 365, (
-        f"{star_name}: mid prior {priors['mid']:.0f} d is outside (200, 7300] d"
+    star_name, _, _, rho_priors, _, _ = benchmark_priors
+    assert 200 < rho_priors["mid"] <= 20 * 365, (
+        f"{star_name}: mid prior {rho_priors['mid']:.0f} d is outside (200, 7300] d"
     )
 
 
 @pytest.mark.slow
 def test_long_prior_is_long(benchmark_priors):
     """Long prior must exceed the mid-range upper limit (> 7 300 d)."""
-    star_name, _, _, priors = benchmark_priors
-    assert priors["long"] > 20 * 365, (
-        f"{star_name}: long prior {priors['long']:.0f} d is not longer than 7300 d"
+    star_name, _, _, rho_priors, _, _ = benchmark_priors
+    assert rho_priors["long"] > 20 * 365, (
+        f"{star_name}: long prior {rho_priors['long']:.0f} d is not longer than 7300 d"
     )
+
+
+@pytest.mark.slow
+def test_benchmark_bounds_contain_prior(benchmark_priors):
+    """For benchmark stars, each prior must lie within its own detected bounds."""
+    star_name, _, _, rho_priors, rho_bounds, _ = benchmark_priors
+    for key in ("short", "mid", "long"):
+        lb, ub = rho_bounds[key]
+        assert lb <= rho_priors[key] <= ub, (
+            f"{star_name} {key}: prior {rho_priors[key]:.1f} not in bounds [{lb:.1f}, {ub:.1f}]"
+        )
