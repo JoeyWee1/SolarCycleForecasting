@@ -13,15 +13,10 @@ from helpers.df_ops import prepare_df, split_df, clean_df
 from helpers.priors import find_classify_signals, get_priors
 
 def set_params(log_params, k, gp):
-    # k = len(log_params) // 3
     params = np.exp(log_params)
-    sigmas = params[0:k]
-    rhos = params[k:2*k]
-    qs = params[2*k::]
-    
-    gp.kernel = terms.SHOTerm(sigma=sigmas[0], rho=rhos[0], Q=qs[0])
-    for k_idx in range(1,k):
-        gp.kernel += terms.SHOTerm(sigma=sigmas[k_idx], rho=rhos[k_idx], Q=qs[k_idx])
+    gp.kernel = terms.SHOTerm(sigma=params[0], rho=params[k], Q=params[2*k])
+    for i in range(1, k):
+        gp.kernel += terms.SHOTerm(sigma=params[i], rho=params[k+i], Q=params[2*k+i])
     return gp
 
 def NLL(log_params, gp, k, y):
