@@ -11,14 +11,14 @@ at the end.
 Usage
 -----
 # All folders, all 100 stars, 5 windows:
-python run_gpr24b.py --sim_root Data/simulated --out_dir Results/simulated
+python cadence_analysis.py --sim_root Data/simulated --out_dir Results/simulated
 
 # One folder only (useful for parallelising over folders on HPC):
-python run_gpr24b.py --sim_root Data/simulated --out_dir Results/simulated \
+python cadence_analysis.py --sim_root Data/simulated --out_dir Results/simulated \
     --rate 1.0d --n_windows 10
 
 # Quick test: 3 G-type stars, 5 windows:
-python run_gpr24b.py --sim_root Data/simulated --out_dir Results/simulated \
+python cadence_analysis.py --sim_root Data/simulated --out_dir Results/simulated \
     --n_stars 3 --star_type_filter G
 """
 
@@ -47,7 +47,7 @@ sys.path.insert(0, str(REPO_ROOT))
 from helpers.df_ops import prepare_df, split_df, clean_df
 from helpers.priors import find_classify_signals, get_priors
 
-# ── GP helpers (from GPR24b) ──────────────────────────────────────────────────
+# ── GP helpers ───────────────────────────────────────────────────────────────
 
 def set_params(log_params, k, gp):
     params = np.exp(log_params)
@@ -86,7 +86,7 @@ def check_constant(predictions, MAD, tol=2, percentile=84):
     amps = predictions.max(axis=1) - predictions.min(axis=1)
     return np.percentile(amps, percentile) / MAD < tol
 
-# ── Fourier ground truth (from GPR24b) ───────────────────────────────────────
+# ── Fourier ground truth ─────────────────────────────────────────────────────
 
 def fit_Fourier(raw_data_df, MAD, med_ref, rho_priors, test_df,
                 error_percent, n_walkers, subsample=500):
@@ -156,7 +156,7 @@ def truth_in_x(model_preds, t_plot_year, t0_year, lookahead_years):
     lb, ub       = np.percentile(min_years, [16, 84])
     return float(np.median(min_years)), (float(lb), float(ub))
 
-# ── run_star (from GPR24b) ────────────────────────────────────────────────────
+# ── run_star ──────────────────────────────────────────────────────────────────
 
 def run_star(datapath, star_name, star_type='G', add_prefix=False,
              error_percent=2.5, sigma_upper_mult=5.0, q_bounds_in=(1, 5),
@@ -324,7 +324,7 @@ def run_star(datapath, star_name, star_type='G', add_prefix=False,
                     best_bounds = cr['bounds']
 
             if verbose:
-                logging.getLogger('gpr24b').info(
+                logging.getLogger('cadence_analysis').info(
                     '  %s: selected %s (%s=%.4f)', star_name, best_combo_name,
                     valid_metric, best_metric)
 
@@ -465,7 +465,7 @@ def run_star(datapath, star_name, star_type='G', add_prefix=False,
             })
 
         except Exception as e:
-            logging.getLogger('gpr24b').warning('%s: split error (%s)', star_name, e)
+            logging.getLogger('cadence_analysis').warning('%s: split error (%s)', star_name, e)
             continue
 
     return {'star': star_name, 'n_obs': len(data_df), 'span_years': float(span),
@@ -497,7 +497,7 @@ def results_to_df(results_list):
 # ── entry point ───────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(description='Batch GPR24b runner on simulated data')
+    parser = argparse.ArgumentParser(description='Batch cadence analysis runner on simulated data')
     parser.add_argument('--sim_root',         default='Data/simulated',
                         help='Root of simulated data (contains <rate>d/ subfolders)')
     parser.add_argument('--out_dir',          default='Results/simulated',
@@ -519,13 +519,13 @@ def main():
     out_dir  = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    log_path = out_dir / 'run_gpr24b.log'
+    log_path = out_dir / 'cadence_analysis.log'
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s  %(levelname)-7s  %(message)s',
         handlers=[logging.FileHandler(log_path), logging.StreamHandler(sys.stdout)],
     )
-    log = logging.getLogger('gpr24b')
+    log = logging.getLogger('cadence_analysis')
     log.info('sim_root  : %s', sim_root)
     log.info('out_dir   : %s', out_dir)
     log.info('n_windows : %d', args.n_windows)

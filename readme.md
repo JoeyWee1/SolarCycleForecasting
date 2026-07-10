@@ -42,7 +42,8 @@ Thesis/
 │   ├── GPR/                                    # GPR model development iterations (GPR1–GPR25)
 │   ├── Priors/                                 # Prior design and automation notebooks
 │   └── data-preproc.ipynb              #  Data preprocessing and exploration
-│
+│                                                       # FOR DETAILS ON THE NOTEBOOKS SEE THE README APPENDIX  
+|
 ├── Report/                                     # Written report and figures
 │   ├── Figures/                                # All figures included in the report
 │   ├── report.pdf                              # Delicious dissertation report
@@ -54,7 +55,10 @@ Thesis/
 │
 ├── tests/                                           # Unit and integration tests
 │   ├── conftest.py
+│   ├── test_df_ops.py
+│   ├── test_eval.py
 │   ├── test_gpr.py
+│   ├── test_mcmc.py
 │   └── test_priors.py
 │
 ├── .gitignore
@@ -88,7 +92,7 @@ There are a few key tasks the code can accomplish; we will go through them here 
 ### Predict a star
 Our predictions work on S-Index data (refer to the report for details on the S-Index).
 With a dataset of S-Index measurements and the Julian date (JD) times at which they were taken, the code can create the predictions.
-``` 
+``` python
 from helpers.pipeline import run_star
 result = run_star(
     datapath='../../Data/benchmark/HD201091_Mt_wilson_data.txt',
@@ -115,6 +119,17 @@ python analyse_star.py \ # From the Analysis folder
 ```
 There is also a bash wrapper for HPC use. Edit the username for it to work.
 
+To analyse the results, load the pickles and flatten them with `results_to_df`, then plot:
+```python
+import pickle, glob
+from helpers.pipeline import results_to_df
+from helpers.eval import plot_return_errors
+
+results = [pickle.load(open(f, 'rb')) for f in glob.glob('/path/to/results/*.pkl')]
+df = results_to_df(results)
+plot_return_errors(df, max_lookahead=5)
+```
+
 ### Cadence analysis
 In the report, how the cadence affects the accuracy of the predictions is reported. 
 Due to the HPC failure this was only run with 15/100 simulated stars.
@@ -123,11 +138,40 @@ To perform the full analysis, use cadence_analysis.py.
 # All folders, all 100 stars, 5 windows:
 python cadence_analysis.py --sim_root Data/simulated --out_dir Results/simulated
 ```
+If it is desired to generate more than the current 100 stars,  run all cells in `Notebooks/GPR/GPR24a_Simulated_Data.ipynb`.
+To plot the results,
+```python
+import pandas as pd
+from helpers.eval import plot_cadence_analysis
+
+df = pd.read_csv('Results/simulated/all_rates.csv')
+plot_cadence_analysis(df, max_lookahead=5, savefig='Report/Figures/CadenceAnalysis.png')
+```
 
 ## Test Suite
 ---
+A test suite was written to ensure things were always working during continuous integration.
+Some of the tests take a long time to run. As such, they have been divided into fast unit tests and slow tests marked with `@pytest.mark.slow`.
 
+| File | What it tests |
+|------|--------------|
+| `test_df_ops.py` | `prepare_df`, `split_df`, `clean_df`, `downsample_min_gap` |
+| `test_eval.py` | `check_constant`, `best_in_x`, `truth_in_x` |
+| `test_gpr.py` | `train_gpr` on the three benchmark stars (slow) |
+| `test_mcmc.py` | `lnPost_gp` — bounds, prior penalty, multi-term kernels |
+| `test_priors.py` | SM2016 relations, `get_priors` resolver, benchmark star priors (slow) |
 
+From the project root:
+```bash
+# Fast unit tests only (seconds)
+.\VenvThesis\Scripts\python.exe -m pytest -m "not slow"
+
+# Slow integration tests only (runs full GPR/LSP on benchmark stars, 25 min)
+.\VenvThesis\Scripts\python.exe -m pytest -m slow
+
+# Full suite
+.\VenvThesis\Scripts\python.exe -m pytest
+```
 
 ## Notes
 ---
@@ -137,11 +181,18 @@ import warnings
 warnings.filterwarnings('ignore', message='invalid value encountered in scalar subtract')
 ```
 
-
 ## Autogeneration Tools
 ---
-
-
+LLMs, specifically Claude Sonnet 5, were used to support this work. 
+It was used to:
+    - Help debug code when human attempts failed.
+    - Improve low efficiency code: "how could this code be made more efficient?"
+    - Help with some of the more esoteric Matplotlib functions: "how do I make this plot look like xyz?"
+    - Help rephrase unwieldy sentences: "how can I make this sentence flow better?"
+    - Generate the repository structure section in the readme.md. The annotations are mine.
+    - Help wrapping code for use in HPC: "how could I write this for HPC use?"
+    - Help identify test cases for continuous integration: "what should I test in xyz function and how could I do that?"
+I would like to emphasise that the analysis and thought processes are *my own*. 
 
 ## Appendix: Detailed Notebook Breakdown
 ---

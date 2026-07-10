@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -J gpr24b_sim
+#SBATCH -J cadence_analysis
 #SBATCH -A MPHIL-DIS-SL2-CPU
 #SBATCH -p icelake
 #SBATCH --nodes=1
@@ -7,7 +7,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=32G
 #SBATCH --time=24:00:00
-#SBATCH --output=/home/zyw26/rds/hpc-work/logs/gpr24b_%j.log
+#SBATCH --output=/home/zyw26/rds/hpc-work/logs/cadence_analysis_%j.log
 #SBATCH --array=0-9   # one job per sampling-rate folder; comment out to run all in one job
 
 # ── sampling-rate folders in the same order as np.linspace(1,90,10) ──────────
@@ -24,7 +24,7 @@ fi
 # ── paths (edit to match your HPC layout) ────────────────────────────────────
 REPO=/home/zyw26/Thesis/SolarCycleForecasting
 SIM_ROOT=$REPO/Data/simulated
-OUT_DIR=/home/zyw26/rds/hpc-work/gpr24b_results
+OUT_DIR=/home/zyw26/rds/hpc-work/cadence_analysis_results
 
 mkdir -p "$OUT_DIR"
 mkdir -p /home/zyw26/rds/hpc-work/logs
@@ -36,7 +36,7 @@ N_WINDOWS=25        # number of lookahead windows per star
 # N_STARS=3         # uncomment to limit stars (useful for testing)
 # STAR_TYPE=G       # uncomment to run only one spectral type
 
-python "$REPO/Analysis/run_gpr24b.py" \
+python "$REPO/Analysis/cadence_analysis.py" \
     --sim_root   "$SIM_ROOT"  \
     --out_dir    "$OUT_DIR"   \
     --n_windows  $N_WINDOWS   \
