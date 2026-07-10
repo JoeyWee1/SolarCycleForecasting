@@ -15,8 +15,8 @@ This project has produced a scalable pipeline which creates these forecasts.
 ```
 Thesis/
 ├── Analysis/                                # Batch run scripts and shell wrappers
-│   ├── analyse_star.py                 # Batch GPR window analysis pipeline runner (per-star pickle output)
-│   ├── analyse_star.sh                 # Shell wrapper for analyse_star.py
+│   ├── star_window_analysis.py         # Batch GPR window analysis pipeline runner (per-star pickle output)
+│   ├── star_window_analysis.sh         # Shell wrapper for star_window_analysis.py
 │   ├── cadence_analysis.py          # Observing cadence analysis script
 │   └── cadence_analysis.sh         # Shell wrapper for cadence_analysis.py
 │
@@ -95,7 +95,7 @@ With a dataset of S-Index measurements and the Julian date (JD) times at which t
 ``` python
 from helpers.pipeline import run_star
 result = run_star(
-    datapath='../../Data/benchmark/HD201091_Mt_wilson_data.txt',
+    datapath='Data/benchmark/HD81809_Mt_wilson_data.txt',
     star_name='HD81809', star_type='G', add_prefix=False,
     lookahead_years=[1, 2, 3, 5],
     verbose=False, plot=True, # This will plot the predictions
@@ -109,8 +109,8 @@ In the report, we evaluated the performance of the predictions on the benchmark 
 Due to HPC failure this was not completed on the full mwd dataset. 
 A similar analysis can be performed on other data easily using star_window_analysis.py.
 ``` 
-# In command line
-python analyse_star.py \ # From the Analysis folder
+# In command line (from project root)
+python Analysis/star_window_analysis.py \
     --data_dir  /path/to/Data/mwd \
     --output_dir /path/to/results \ # Outputs one pkl per star
     [--star_type G] \  # Star type data; here we use G because it is valid with the SM2016 relation
@@ -136,7 +136,7 @@ Due to the HPC failure this was only run with 15/100 simulated stars.
 To perform the full analysis, use cadence_analysis.py.
 ```
 # All folders, all 100 stars, 5 windows:
-python cadence_analysis.py --sim_root Data/simulated --out_dir Results/simulated
+python Analysis/cadence_analysis.py --sim_root Data/simulated --out_dir Results/simulated
 ```
 If it is desired to generate more than the current 100 stars,  run all cells in `Notebooks/GPR/GPR24a_Simulated_Data.ipynb`.
 To plot the results,
