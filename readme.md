@@ -37,13 +37,52 @@ Thesis/
 │   ├── priors.py                             # Prior generation and signal classification
 │   └── __init__.py
 │
-├── Notebooks/                              # Exploratory and development notebooks
+├── Notebooks/                              # Code development notebooks
 │   ├── ARIMA/                              # ARIMA baseline experiments
-│   ├── GPR/                                    # GPR model development iterations (GPR1–GPR25)
+│   │   ├── ARIMA1_solar.ipynb          # ARIMA/Fourier+ARIMA baseline on solar S-index; motivates GPR
+│   │   └── ARIMA2_baseline_stars.ipynb # Same on benchmark stars; highlights ARIMA inadequacy
+│   ├── GPR/                                    # GPR model development iterations
+│   │   ├── GPR1.ipynb                      # First GPR attempt; priors identified as necessary
+│   │   ├── GPR2.ipynb                      # Manual kernel tuning on solar data
+│   │   ├── GPR3.ipynb                      # Moving-window SHO+ROT kernel on solar data
+│   │   ├── GPR4_Spectrum_Kernel.ipynb  # Spectrum kernel introduced
+│   │   ├── GPR5_Moving_Window_Spectrum.ipynb  # Moving-window eval of spectrum kernel
+│   │   ├── GPR6_Refined_Priors_GPR.ipynb      # LSP-derived priors applied to benchmark stars
+│   │   ├── GPR7_Removing_Outliers.ipynb        # MAD outlier filter; motivates model selection
+│   │   ├── GPR8_Model_Selection.ipynb          # NLPD-based selection across kernel configurations
+│   │   ├── GPR9_Pipeline.ipynb                 # Consolidated train_gpr() pipeline
+│   │   ├── GPR10_Moving_Window_Pipeline.ipynb  # Moving-window sweep of pipeline; motivates MCMC
+│   │   ├── GPR11_Further_Baseline_Manual.ipynb # LSP detection over full MWD catalogue stats
+│   │   ├── GPR12a_Examining_Each_Detected_Combo_3sml_HD18256.ipynb  # 3sml case (all detected)
+│   │   ├── GPR12b_Examining_Each_Detected_Combo_2sm_HD10072.ipynb   # 2sm case (no long)
+│   │   ├── GPR12c_Examining_Each_Detected_Combo_2ml_HD16673.ipynb   # 2ml case (no short)
+│   │   ├── GPR12d_Examining_Each_Detected_Combo_1m_HD11131.ipynb    # 1m case (cycle only)
+│   │   ├── GPR12d_Examining_Each_Detected_Como_0_HD10700.ipynb      # 0 case (flat star)
+│   │   ├── GPR13_MCMC.ipynb                    # emcee MCMC for kernel parameter uncertainty
+│   │   ├── GPR14_BMA.ipynb                     # Bayesian Model Averaging across kernel candidates
+│   │   ├── GPR14b_BMA_window.ipynb             # BMA in moving-window analysis; motivates CRPS
+│   │   ├── GPR15_CRPS_window.ipynb             # CRPS-weighted BMA; single-model MCMC instead chosen
+│   │   ├── GPR16_Minima_MCMC.ipynb             # Lookahead windows 
+│   │   ├── GPR17_Results.ipynb                 # Full CRPS + MCMC + lookahead pipeline on HD201091
+│   │   ├── GPR18_Improved_Results.ipynb        # Fixes boundary ringing and data leakage
+│   │   ├── GPR19_Results_Window.ipynb          # Multi-window sweep with lookahead vs ground truth
+│   │   ├── GPR20_Min_Gap_Window.ipynb          # Min-gap downsampling to fix boundary bias
+│   │   ├── GPR21_New_Opt.ipynb                 # Forward-NLPD optimisation strategy
+│   │   ├── GPR22_Init_Cond_Var.ipynb           # Multi-start optimisation
+│   │   ├── GPR23a_Revised_Ground_Truth.ipynb   # Fourier MCMC probabilistic ground truth
+│   │   ├── GPR23b_Revised_Ground_Truth_Pipeline.ipynb  # Fourier truth integrated into windowed pipeline
+│   │   ├── GPR23c_Functionalised.ipynb         # star_window_analysis() and results_to_df() finalised
+│   │   ├── GPR24a_Simulated_Data.ipynb         # Synthetic stellar population generator
+│   │   ├── GPR24b_Testing_Simulated_Data.ipynb # Pipeline evaluation on simulated population
+│   │   └── GPR25_Run_Star.ipynb                # Production run_star() for prospective predictions
 │   ├── Priors/                                 # Prior design and automation notebooks
-│   └── data-preproc.ipynb              #  Data preprocessing and exploration
-│                                                       # FOR DETAILS ON THE NOTEBOOKS SEE THE README APPENDIX  
-|
+│   │   ├── priors1_rationalising_priors.ipynb  # LSP peak detection; motivates SM2016 fallback
+│   │   ├── priors2_manual.ipynb                # Manual iterative prior extraction on HD81809
+│   │   ├── priors3_automate_manual.ipynb       # fit_peaks() function; verified on all benchmark stars
+│   │   ├── priors4_clean_automated.ipynb       # Production-ready fit_peaks()
+│   │   └── priors5_prior_generating_func.ipynb # get_priors() with SM2016 and type-mean fallbacks
+│   └── data-preproc.ipynb                      # Data preprocessing, visualisation, and split setup
+│
 ├── Report/                                     # Written report and figures
 │   ├── Figures/                                # All figures included in the report
 │   ├── report.pdf                              # Delicious dissertation report
@@ -194,16 +233,5 @@ It was used to:
     - Help identify test cases for continuous integration: "what should I test in xyz function and how could I do that?"
 I would like to emphasise that the analysis and thought processes are *my own*. 
 
-## Appendix: Detailed Notebook Breakdown
----
-
-- data-preproc.ipynb: used to plot and visualise datasets 
-
-### ARIMA/
-
-- ARIMA/ARIMA1_solar.ipynb: Runs ARIMA and Fourier-ARIMA on the solar data.
-- ARIMA/ARIMA2_baseline_star.ipynb:  Similar to ARIMA1 but analyses the benchmark star datasets.
-
-### Priors/
 
 
