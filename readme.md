@@ -197,3 +197,13 @@ I would like to emphasise that the analysis and thought processes are *my own*.
 ## Appendix: Detailed Notebook Breakdown
 ---
 
+- data-preproc.ipynb: used to plot and visualise datasets 
+
+### ARIMA/
+
+- ARIMA/ARIMA1_solar.ipynb: Runs ARIMA and Fourier-ARIMA on the solar data.
+- ARIMA/ARIMA2_baseline_star.ipynb:  Similar to ARIMA1 but analyses the benchmark star datasets.
+
+### Priors/
+
+
