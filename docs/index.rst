@@ -8,8 +8,8 @@ spectroscopic or photometric measurements. Non-exoplanetary noise introduced by
 stellar activity can significantly affect exoplanet detectability, and the
 high-precision instruments used for these measurements are heavily oversubscribed.
 Because noise magnitude is proportional to stellar activity, predicting periods of
-lower activity — using data from more modest instruments — allows observation
-schedules to be optimised so that high-precision instruments are used at stellar
+lower activity, using data from more modest instruments, allows observation
+schedules to be optimised so that high-precision instruments are used to observe stellar
 activity minima, maximising detectability.
 
 This project produces a scalable GPR pipeline for those forecasts.
