@@ -19,10 +19,10 @@ def SM2016_intercepts(a):
     using the mean cycle and rotation periods from Tables 1 and 2 of Suárez Mascareño 2016.
 
     In:
-        a (float): slope of the relation 
+        - a (float): slope of the relation 
 
     Out:
-        intercepts (dict): keys F, G, K; values are intercepts.
+        - intercepts (dict): keys F, G, K; values are intercepts.
     '''
     mu_Pcycs = np.array([9.5, 6.7, 8.5]) # years
     mu_Pcycs *= 365 # now in days
@@ -38,12 +38,12 @@ def SM2016_s_to_m(P_rot, star_type, a = 0.89):
     Only valid for FGK stars.
 
     In:
-        P_rot (float): rotation period in days
-        star_type (str): spectral type, one of F, G, K
-        a (float): slope of the relation 
+        - P_rot (float): rotation period in days
+        - star_type (str): spectral type, one of F, G, K
+        - a (float): slope of the relation 
 
     Out:
-        P_cyc (float): predicted activity cycle period in days
+        - P_cyc (float): predicted activity cycle period in days
     '''
     c = SM2016_intercepts(a)[star_type]
     log10_Pcyc = (1-a)* np.log10(P_rot) + c
@@ -56,12 +56,12 @@ def SM2016_m_to_s(P_cyc, star_type, a = 0.89):
     Only valid for FGK stars.
 
     In:
-        P_cyc (float): activity cycle period in days
-        star_type (str): spectral type, one of F, G, K
-        a (float): slope of the relation 
+        - P_cyc (float): activity cycle period in days
+        - star_type (str): spectral type, one of F, G, K
+        - a (float): slope of the relation 
 
     Out:
-        P_rot (float): predicted rotation period in days
+        - P_rot (float): predicted rotation period in days
     '''
     c = SM2016_intercepts(a)[star_type]
     log10_Prot = (1/(1-a))*(np.log10(P_cyc)-c)
@@ -83,20 +83,20 @@ def find_classify_signals(df,
     Short: <= s_lim days (rotation-scale), mid: s_lim to m_lim (activity cycle), long: > m_lim.
 
     In:
-        df (DataFrame): training data with 'day' and 'sind' columns
-        manual_freq (str or None): passed to fit_peaks; 'linear', 'log', or None
-        period_range (list): [min, max] period in days for the LSP grid
-        n_periods (int): number of frequency grid points
-        FAPs (list of floats): false alarm probability levels as percentages
-        key_FAP_idx (int): index into FAPs giving the detection threshold
-        threshold (float): minimum SNR for peak acceptance
-        s_lim (float): short/mid period boundary in days (default 250)
-        m_lim (float): mid/long period boundary in days (default 25*365)
-        plot_fitpeaks / verbose_fitpeaks (bool): output flags for fit_peaks
-        plot_genpriors / verbose_genpriors (bool): output flags for the classification plot
+        - df (DataFrame): training data with 'day' and 'sind' columns
+        - manual_freq (str or None): passed to fit_peaks; 'linear', 'log', or None
+        - period_range (list): [min, max] period in days for the LSP grid
+        - n_periods (int): number of frequency grid points
+        - FAPs (list of floats): false alarm probability levels as percentages
+        - key_FAP_idx (int): index into FAPs giving the detection threshold
+        - threshold (float): minimum SNR for peak acceptance
+        - s_lim (float): short/mid period boundary in days (default 250)
+        - m_lim (float): mid/long period boundary in days (default 25*365)
+        - plot_fitpeaks / verbose_fitpeaks (bool): output flags for fit_peaks
+        - plot_genpriors / verbose_genpriors (bool): output flags for the classification plot
 
     Out:
-        priors (dict): keys 'short', 'mid', 'long' with values in days; key absent if not detected
+        - priors (dict): keys 'short', 'mid', 'long' with values in days; key absent if not detected
     '''
     peak_periods, peak_heights = fit_peaks(df, 
                     manual_freq = manual_freq, period_range = period_range, n_periods = n_periods,  # this is all the fit_peaks stuff
@@ -181,17 +181,17 @@ def get_priors(classified_signal_data, star_type, verbose = True,
         literature means. The long-range prior defaults to 100 years if undetected.
 
         In:
-            classified_signal_data (dict): output of find_classify_signals; values in days
-            star_type (str): spectral type, one of F, G, K, ME, MM
-            direct_bound_tol (float): fractional bound around a directly detected period
-            sm2016_bound_tol (float): fractional bound around an SM2016-derived period
-            mean_bound_tol (float): number of literature std devs for a fallback mean prior
-            verbose (bool): whether to print a summary table
+            - classified_signal_data (dict): output of find_classify_signals; values in days
+            - star_type (str): spectral type, one of F, G, K, ME, MM
+            - direct_bound_tol (float): fractional bound around a directly detected period
+            - sm2016_bound_tol (float): fractional bound around an SM2016-derived period
+            - mean_bound_tol (float): number of literature std devs for a fallback mean prior
+            - verbose (bool): whether to print a summary table
 
         Out:
-            rho_priors (dict): keys short, mid, long; best-guess periods in days
-            rho_bounds (dict): keys short, mid, long; [lower, upper] bounds in days
-            sources (dict): keys short, mid, long; one of 'found', 'SM2016', or 'mean'
+            - rho_priors (dict): keys short, mid, long; best-guess periods in days
+            - rho_bounds (dict): keys short, mid, long; [lower, upper] bounds in days
+            - sources (dict): keys short, mid, long; one of 'found', 'SM2016', or 'mean'
         '''
         #------- Define the means and standard deviations that are fallbacks------------
         mu_Pmids = { # THESE COME FROM SM2016
