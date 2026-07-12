@@ -100,6 +100,14 @@ Thesis/
 │   ├── test_mcmc.py
 │   └── test_priors.py
 │
+├── docs/                                       # Sphinx API documentation
+│   ├── _build/                             # Generated HTML output
+│   ├── analysis.rst                        # Autodoc page for Analysis scripts
+│   ├── conf.py                             # Sphinx configuration
+│   ├── helpers.rst                         # Autodoc page for helpers package
+│   ├── index.rst                           # Documentation landing page
+│   └── make.bat                            # Windows build script
+│
 ├── .gitignore
 ├── Instructions.md
 ├── LICENSE
