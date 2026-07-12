@@ -128,7 +128,7 @@ pip install -r requirements.txt
 ---
 There are a few key tasks the code can accomplish; we will go through them here one by one.
 
-### Predict a star
+### Key result: predict stellar cycle
 Our predictions work on S-Index data (refer to the report for details on the S-Index).
 With a dataset of S-Index measurements and the Julian date (JD) times at which they were taken, the code can create the predictions.
 ``` python
@@ -141,7 +141,6 @@ result = run_star(
 )
 ```
 The result object contains the predictions and best times to observe in the lookahead windows.
-See documentation for details.
 
 ### Evaluate pipeline performance
 In the report, we evaluated the performance of the predictions on the benchmark stars with 25 splits per dataset.
@@ -186,6 +185,15 @@ from helpers.eval import plot_cadence_analysis
 df = pd.read_csv('Results/simulated/all_rates.csv')
 plot_cadence_analysis(df, max_lookahead=5, savefig='Report/Figures/CadenceAnalysis.png')
 ```
+
+## Documentation
+---
+API documentation is generated from docstrings using Sphinx. To build:
+```powershell
+cd docs
+.\make.bat html
+```
+Then open `docs/_build/html/index.html` in a browser.
 
 ## Test Suite
 ---
