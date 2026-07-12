@@ -35,7 +35,7 @@ def run_one_star(datapath, output_dir, star_type, n_windows, log):
     star_name = Path(datapath).stem.replace("_caii", "").upper()
     out_path = Path(output_dir) / f"{star_name}_results.pkl"
 
-    log.info("── %s ──", star_name)
+    log.info("-- %s --", star_name)
 
     result = star_window_analysis(
         datapath=str(datapath),

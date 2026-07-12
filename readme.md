@@ -203,13 +203,13 @@ Some of the tests take a long time to run. As such, they have been divided into 
 From the project root:
 ```bash
 # Fast unit tests only (seconds)
-.\VenvThesis\Scripts\python.exe -m pytest -m "not slow"
+.\[VenvName]\Scripts\python.exe -m pytest -m "not slow"
 
 # Slow integration tests only (runs full GPR/LSP on benchmark stars, 25 min)
-.\VenvThesis\Scripts\python.exe -m pytest -m slow
+.\[VenvName]\Scripts\python.exe -m pytest -m slow
 
 # Full suite
-.\VenvThesis\Scripts\python.exe -m pytest
+.\[VenvName]\Scripts\python.exe -m pytest
 ```
 
 ## Notes
