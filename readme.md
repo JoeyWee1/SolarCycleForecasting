@@ -220,13 +220,13 @@ Some of the tests take a long time to run. As such, they have been divided into 
 From the project root:
 ```bash
 # Fast unit tests only (seconds)
-.\[VenvName]\Scripts\python.exe -m pytest -m "not slow"
+.\VenvName\Scripts\python.exe -m pytest -m "not slow"
 
 # Slow integration tests only (runs full GPR/LSP on benchmark stars, 25 min)
-.\[VenvName]\Scripts\python.exe -m pytest -m slow
+.\VenvName\Scripts\python.exe -m pytest -m slow
 
 # Full suite
-.\[VenvName]\Scripts\python.exe -m pytest
+.\VenvName\Scripts\python.exe -m pytest
 ```
 
 ## Notes
@@ -245,10 +245,11 @@ It was used to:
     - Improve low efficiency code: "how could this code be made more efficient?"
     - Help with some of the more esoteric Matplotlib functions: "how do I make this plot look like xyz?"
     - Help rephrase unwieldy sentences: "how can I make this sentence flow better?"
-    - Generate the repository structure section in the readme.md. The annotations are mine.
+    - Help with generating the repository structure section in the readme.md. 
     - Help wrapping code for use in HPC: "how could I write this for HPC use?"
     - Help identify test cases for continuous integration: "what should I test in xyz function and how could I do that?"
-I would like to emphasise that the analysis and thought processes are *my own*. 
+    - Standardising docstring formatting.
+I would like to emphasise that the analysis, algorithm design, and thought processes are  *my own*.  Model outputs were always reviewed and checked against literature. No generated response was incorporated into the work without thorough verification.
 
 
 
