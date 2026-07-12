@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-analyse_star.py
+star_window_analysis.py
 Batch runner to apply the GPR pipeline to every dataset in Data/mwd/ that
 passes quality checks. One pickle file per star is written under --output_dir.
 
@@ -30,9 +30,10 @@ sys.path.insert(0, str(REPO_ROOT))
 from helpers.pipeline import star_window_analysis
 
 
+# Thin wrapper around star_window_analysis(); handles logging and pickle write
 def run_one_star(datapath, output_dir, star_type, n_windows, log):
     star_name = Path(datapath).stem.replace("_caii", "").upper()
-    out_path  = Path(output_dir) / f"{star_name}_results.pkl"
+    out_path = Path(output_dir) / f"{star_name}_results.pkl"
 
     log.info("── %s ──", star_name)
 
@@ -88,6 +89,7 @@ def main():
     log.info("star_type  : %s", args.star_type)
     log.info("n_windows  : %d", args.n_windows)
 
+    # Discover all Ca II S-index files in the data directory
     data_files = sorted(Path(args.data_dir).glob("*_caii.txt"))
     log.info("Found %d dataset files", len(data_files))
 
@@ -95,7 +97,7 @@ def main():
 
     for i, datapath in enumerate(data_files):
         star_name = datapath.stem.replace("_caii", "").upper()
-        out_path  = output_dir / f"{star_name}_results.pkl"
+        out_path = output_dir / f"{star_name}_results.pkl"
 
         if args.skip_existing and out_path.exists():
             log.info("[%d/%d] SKIP (exists): %s", i + 1, len(data_files), star_name)
