@@ -113,6 +113,7 @@ Thesis/
 ├── LICENSE
 ├── notes.md
 ├── readme.md
+├── pytest.ini                                 # Initialisation for the test suite
 └── requirements.txt
 ```
 
