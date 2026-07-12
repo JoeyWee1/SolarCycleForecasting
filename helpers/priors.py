@@ -17,9 +17,14 @@ from helpers.LSP_peaks import set_period_axes, fit_peaks
 
 def SM2016_intercepts(a):
     '''
-    Gets the y intercept of the SM2016 formula.
-    Uses the mean values from Table 1 and Table 2 in the paper.
-    Everything in FGK order
+    Computes the y-intercepts of the SM2016 log P_cyc vs log P_rot relation for F, G, K types,
+    using the mean cycle and rotation periods from Tables 1 and 2 of Suárez Mascareño 2016.
+
+    In:
+        a (float): slope of the relation (default 0.89)
+
+    Out:
+        intercepts (dict): keys F, G, K; values are intercepts in log10 space
     '''
     mu_Pcycs = np.array([9.5, 6.7, 8.5]) # years
     mu_Pcycs *= 365 # now in days
@@ -31,10 +36,16 @@ def SM2016_intercepts(a):
 
 def SM2016_s_to_m(P_rot, star_type, a = 0.89):
     '''
-    ONLY VALID FOR FGK STARS
-    This takes in the short period and return the mid period.
-    Calculated using the SM2016 relation.
-    Slope a = 0.89 pm 0.05 betwen x-> log(1/P_rot) and y-> log(P_cyc/P_rot)
+    Predicts the mid (activity cycle) period from a rotation period using the SM2016 relation.
+    Only valid for FGK stars.
+
+    In:
+        P_rot (float): rotation period in days
+        star_type (str): spectral type, one of F, G, K
+        a (float): slope of the relation (default 0.89)
+
+    Out:
+        P_cyc (float): predicted activity cycle period in days
     '''
     c = SM2016_intercepts(a)[star_type]
     log10_Pcyc = (1-a)* np.log10(P_rot) + c
@@ -43,10 +54,16 @@ def SM2016_s_to_m(P_rot, star_type, a = 0.89):
 
 def SM2016_m_to_s(P_cyc, star_type, a = 0.89):
     '''
-    ONLY VALID FOR FGK STARS
-    This takes in the mid period and returns the short period.
-    Calculated using hte SM2016 relation.
-    Slope a = 0.89 pm 0.05 betwen x-> log(1/P_rot) and y-> log(P_cyc/P_rot)
+    Predicts the rotation period from a mid (activity cycle) period using the SM2016 relation.
+    Only valid for FGK stars.
+
+    In:
+        P_cyc (float): activity cycle period in days
+        star_type (str): spectral type, one of F, G, K
+        a (float): slope of the relation (default 0.89)
+
+    Out:
+        P_rot (float): predicted rotation period in days
     '''
     c = SM2016_intercepts(a)[star_type]
     log10_Prot = (1/(1-a))*(np.log10(P_cyc)-c)
@@ -64,20 +81,24 @@ def find_classify_signals(df,
         plot_genpriors = True, verbose_genpriors = True,
         ):
     '''
-    Generates the prior guesses for each of the three ranges for the spectrum kernel.
+    Runs fit_peaks on the training data and classifies detected periods into short/mid/long ranges.
+    Short: <= s_lim days (rotation-scale), mid: s_lim to m_lim (activity cycle), long: > m_lim.
 
-    Takes in the DF, calculates the LSP, identifies the peaks and the number thereof.
-    It uses simple heuristics to classify them into long, mid, and short ranges.
+    In:
+        df (DataFrame): training data with 'day' and 'sind' columns
+        manual_freq (str or None): passed to fit_peaks; 'linear', 'log', or None
+        period_range (list): [min, max] period in days for the LSP grid
+        n_periods (int): number of frequency grid points
+        FAPs (list of floats): false alarm probability levels as percentages
+        key_FAP_idx (int): index into FAPs giving the detection threshold
+        threshold (float): minimum SNR for peak acceptance
+        s_lim (float): short/mid period boundary in days (default 250)
+        m_lim (float): mid/long period boundary in days (default 25*365)
+        plot_fitpeaks / verbose_fitpeaks (bool): output flags for fit_peaks
+        plot_genpriors / verbose_genpriors (bool): output flags for the classification plot
 
-    Params
-    plot: plots LSP if True
-    min_period, max_period in years
-    n_periods to set the resolution
-    s_lim = 150 days is approx what SM2016 says so 250 is safe
-    m_lim = 14 years so do 25 * 365 to be safe
-    
-    Returns
-    The peak periods and their concomitant ranges.
+    Out:
+        priors (dict): keys 'short', 'mid', 'long' with values in days; key absent if not detected
     '''
     peak_periods, peak_heights = fit_peaks(df, 
                     manual_freq = manual_freq, period_range = period_range, n_periods = n_periods,  # this is all the fit_peaks stuff
@@ -162,14 +183,22 @@ def get_priors(classified_signal_data, star_type, verbose = True,
                         mean_bound_tol = 1, # 1 std: make sure to correct for lower bound max(0, mean-meanboundtol*std)
                ):
         '''
-        This takes in the input of the find_classify_signals function
-        and outputs the three priors. One in each range.count
-        Fills in missing ones using the SM2016 relationship.
-        Fills in missing long-term priors with 100 year guess.
+        Converts classified signal data into GP rho priors and bounds for each cycle range.
+        Missing periods are filled using SM2016 (if the complementary range was detected) or
+        literature means. The long-range prior defaults to 100 years if undetected.
 
-        Returns the priors and the bounds. Bounds are based on what tolerance we want for mean and SM2016.
-        Mean comes from a table with stds. Define mean bounds as standard deviations allowed.
-        SM2016 should be percentage based.
+        In:
+            classified_signal_data (dict): output of find_classify_signals; values in days
+            star_type (str): spectral type, one of F, G, K, ME, MM
+            direct_bound_tol (float): fractional bound around a directly detected period
+            sm2016_bound_tol (float): fractional bound around an SM2016-derived period
+            mean_bound_tol (float): number of literature std devs for a fallback mean prior
+            verbose (bool): whether to print a summary table
+
+        Out:
+            rho_priors (dict): keys short, mid, long; best-guess periods in days
+            rho_bounds (dict): keys short, mid, long; [lower, upper] bounds in days
+            sources (dict): keys short, mid, long; one of 'found', 'SM2016', or 'mean'
         '''
         #------- Define the means and standard deviations that are fallbacks------------
         mu_Pmids = { # THESE COME FROM SM2016

@@ -13,6 +13,18 @@ from helpers.df_ops import prepare_df, split_df, clean_df
 from helpers.priors import find_classify_signals, get_priors
 
 def set_params(log_params, k, gp):
+    '''
+    Sets the kernel of a celerite2 GP from a flat log-parameter vector.
+    Parameter order is [log_sigma x k, log_rho x k, log_Q x k].
+
+    In:
+        log_params (array of floats): log-space GP parameters, length 3k
+        k (int): number of SHO terms
+        gp (celerite2 GaussianProcess): the GP whose kernel will be updated
+
+    Out:
+        gp (celerite2 GaussianProcess): the same GP with its kernel updated in place
+    '''
     params = np.exp(log_params)
     gp.kernel = terms.SHOTerm(sigma=params[0], rho=params[k], Q=params[2*k])
     for i in range(1, k):
@@ -21,7 +33,16 @@ def set_params(log_params, k, gp):
 
 def NLL(log_params, gp, k, y):
     '''
-    Calculates the NLL of a set of parameters for a local gp
+    Computes the negative log-likelihood of the GP at the given log-space parameters.
+
+    In:
+        log_params (array of floats): log-space GP parameters, length 3k
+        gp (celerite2 GaussianProcess): the GP to evaluate
+        k (int): number of SHO terms
+        y (array of floats): S-index observations
+
+    Out:
+        NLL (float): negative log-likelihood
     '''
     gp = set_params(log_params, k, gp)
     gp.recompute(quiet=True)
@@ -29,23 +50,45 @@ def NLL(log_params, gp, k, y):
 
 
 def train_gpr(
-        datapath, 
-        direct_bound_tol = 0.1, sm2016_bound_tol = 0.2, 
-        mean_bound_tol = 1, # in std
-        add_prefix: bool = False, # whether or not to add the 240000 to the JD
+        datapath,
+        direct_bound_tol = 0.1, sm2016_bound_tol = 0.2,
+        mean_bound_tol = 1,
+        add_prefix: bool = False,
         train_split: float = 0.8, valid_split: float = 0.19,
         star_type: str = None, star_name: str = None,
-        error_percent: float = 2.5, # the percentage error of the input
+        error_percent: float = 2.5,
         sigma_upper_mult: float = 5.0, q_bounds_in = [5, 100],
-        relative: bool = True, # Plot data with relative dates
-        verbose = True, plot = True, # general outputs
-        loop_verbose: bool = False, loop_plot: bool = False, loop_savefigs: bool = True, # output within the loop
-        results_verbose: bool = True, results_plot: bool = True, ax = None, # output the results
-        result_plot_cadence = 1, # Plot every x days
-        result_plot_extra = 100, # Plot for 100 days extra after end of validation set
-        require_mid: bool = True, # discard kernel combos with no mid-range term (prevents underfitting with sparse data)
+        relative: bool = True,
+        verbose = True, plot = True,
+        loop_verbose: bool = False, loop_plot: bool = False, loop_savefigs: bool = True,
+        results_verbose: bool = True, results_plot: bool = True, ax = None,
+        result_plot_cadence = 1,
+        result_plot_extra = 100,
+        require_mid: bool = True,
         SEED = 1701
         ):
+        '''
+        Interactive single-star GPR pipeline. Loads data, runs model selection across all kernel
+        combos (1s, 1m, 1l, 2sm, 2ml, 2sl, 3sml, const), selects the best by NLPD on the
+        validation set, and optionally plots the results.
+
+        In:
+            datapath (str): path to the whitespace-separated data file
+            star_type (str): spectral type, one of F, G, K, ME, MM
+            star_name (str): used for plot titles
+            train_split (float): fraction of rows for training
+            valid_split (float): fraction of rows for validation
+            error_percent (float): assumed percentage measurement error on S-index
+            sigma_upper_mult (float): upper bound on sigma as a multiple of the training std
+            q_bounds_in (list): [lower, upper] Q bounds for underdamped SHO terms
+            require_mid (bool): if True, discard kernel combos without a mid-range term
+            verbose / plot (bool): general output flags
+            loop_verbose / loop_plot / loop_savefigs (bool): output flags within the model selection loop
+            results_verbose / results_plot (bool): output flags for the best-model summary
+
+        Out:
+            best_gp (celerite2 GaussianProcess): the best-fit GP trained on the training set
+        '''
       
         # Read the data into a "raw" df
         raw_df = pd.read_csv(datapath, sep=r'\s+', skip_blank_lines=True)

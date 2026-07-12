@@ -13,25 +13,46 @@ from prettytable import PrettyTable
 
 def check_aliases(freq, accepted_freqs, tol = 0.05):
     '''
-    Check if a single period is an alias.
-    If it is an alias we can skip it and use the next period as dominant.
-    Aliases are not subtracted: they are noise.
-    If True, signal is not an alias so set it be added.
+    Checks whether a candidate frequency is an alias of any already-accepted frequency.
+    Aliases are integer or simple-fraction multiples of accepted periods.
+    They are noise and have to be removed.
+
+    In:  
+        freq (float): the candidate frequency in days
+        accepted_freqs (list of floats): reference frequencies
+        tol (float): fractional tolerance 
+        
+    Out: 
+        not_alias (bool): True if the frequency is not an alias and should be considered for acceptance
+        aliased_period (float): the period for which the candidate period is an alias; None if not an alias
+        alial_multiplier (float): the concomitant multiple
+        delta_float (float): the tolerance by which this was identified as an alias
     '''
-    accepted_periods = 1/np.array(accepted_freqs)
+    accepted_periods = 1/np.array(accepted_freqs) # Check in period space
     for p in accepted_periods:
         for mult in [0.25, 1/3, 0.5, 1, 2, 3, 4]:
             pmult_freq = 1/(p*mult)
             delta = np.abs((freq - pmult_freq)/freq)
             if delta < tol: # The signal is an alias
                 return False, p, mult, delta
-    return True, None, None, None
+    return True, None, None, None # None signatures to match other return
 
 def check_windows(freq, tol = 0.05):
     '''
-    Checks if a signal looks suspiciously like a window function.
-    If True, signal is not a window as defined.
+    Checks whether a candidate frequency matches a known observational window function
+    (e.g. yearly, monthly, weekly, or lunar periods).
+
+    In:
+        freq (float): the candidate frequency in days
+        tol (float): the fractional tolerance 
+
+    Out: 
+        not_window (bool): True if the frequency does not match any window and should be kept
+        matched_window_days (float): The window is has been matched to; None of not a window
+        delta (float): The tolerance by which the matching is made; None if not a window
+
     '''
+    # Times
     year = 365.25
     month = year /12
     week = 7
@@ -45,11 +66,39 @@ def check_windows(freq, tol = 0.05):
 
 # Helpers for performing the SNR checks
 def gaussian(t, A, mu, std, c):
+    '''
+    Evaluates a Gaussian with a vertical offset.
+
+    In:  
+        t (array of floats): the x axis
+        A (float): Gaussian amplitude
+        mu (float): the centre of the Gaussian in t-space
+        std (float): Gaussian standard deviation
+        c (float): y axis offset
+
+    Out: 
+        Array of Gaussian values evaluated at t (array of floats)
+    '''
     return A * np.exp(-0.5 * ((t - mu) / std)**2) + c
 
 def find_snr(powers, freqs, peak_freq, peak_idx, peak_height, window = 150):
     '''
-    Fits a Gaussian around a peak, subtracts that peak Gaussian, and then compares it to the remaining residual noise.
+    Fits a Gaussian around a peak and computes SNR as peak amplitude over residual noise std.
+    Falls back to (peak - median) / std if the Gaussian fit fails; these will be weaker than the 
+    Gaussian fits because median will be higher than the residual noise std.
+
+    In:  
+        powers (array of floats): the powers of the LSP
+        freqs (array of floats): the frequency x axis of the LSP
+        peak_freq (float): frequency of the peak considered; used as mu initial guess
+        peak_idx (int): array index of peak for window to be defined
+        peak_height (float): LSP power at the peak; used as amplitude initial guess
+        window (int): half-width of fitted region in indices
+
+    Out:
+        snr (float): the calculated signal-to-noise ratio
+        popt (array of floats): the fit; None if fit failed
+        resid_lsp (array of floats): the residual LSPs; None of fit failed
     '''
     # Define a window around the peak to which to fit a Gaussian
     n = len(powers)
@@ -69,14 +118,14 @@ def find_snr(powers, freqs, peak_freq, peak_idx, peak_height, window = 150):
 
     # Try the curve fit
     try:
-        popt, _ = curve_fit(gaussian, window_freqs, window_powers,
+        popt, _ = curve_fit(gaussian, window_freqs, window_powers, # We don't care about the uncs at this step
                         p0 = p0,
                         bounds = ([0, minf, 0, 0], [np.inf, maxf, np.inf, np.inf]))
-        resid_lsp = window_powers - gaussian(window_freqs, *popt)
+        resid_lsp = window_powers - gaussian(window_freqs, *popt) # The LSP after removing the gaussian
         noise_std = np.std(resid_lsp)
         snr = A0 / noise_std
         return snr, popt, resid_lsp
-    except (RuntimeError, ValueError):
+    except (RuntimeError, ValueError): # IF the fit does not work
         continuum = np.median(window_powers)
         noise = np.std(window_powers)
         return (A0 - continuum) / noise, None, None
@@ -84,43 +133,66 @@ def find_snr(powers, freqs, peak_freq, peak_idx, peak_height, window = 150):
 
 def build_design_matrix(t, accepted_freqs):
     """
-    Constructs the design matrix for a linear least-squares fit
-    of multiple sine/cosine pairs (plus a constant offset).
+    Constructs the design matrix for a linear least-squares fit of multiple sine/cosine pairs
+    with a constant offset. Each frequency contributes a cos and sin column.
+
+    In:
+        t (array of floats): the time axis in days
+        accepted_freqs (list of floats): the accepted frequencies in cycles/day
+
+    Out:
+        X (ndarray): design matrix of shape (n_obs, 1 + 2*n_freqs)
     """
-    # Start with a column of ones for the offset (DC component)
+    # Column of just ones for the offset component
     cols = [np.ones(len(t))]
-    
+
     for f in accepted_freqs:
-        # Math: 2 * pi * frequency * time
-        # This is equivalent to (2 * pi * t) / period
-        cols.append(np.cos(2 * np.pi * f * t))
+        cols.append(np.cos(2 * np.pi * f * t)) # Equivalent to 2 pi t / T
         cols.append(np.sin(2 * np.pi * f * t))
         
-    return np.column_stack(cols)
+    return np.column_stack(cols) 
 
 def simultaneous_fit(t, y, accepted_freqs):
     """
-    Fits all identified frequencies simultaneously and returns 
-    the residuals for the next iteration of the LSP.
+    Fits all accepted frequencies simultaneously via least squares and returns the residuals
+    for the next LSP iteration.
+
+    In:
+        t (array of floats): the time axis in days
+        y (array of floats): the S-index values
+        accepted_freqs (list of floats): the accepted frequencies in cycles per day
+
+    Out:
+        residuals (array of floats): y minus the simultaneous fit
+        params (array of floats): fitted coefficients [offset, cos1, sin1, ...]
     """
     if not accepted_freqs:
         # If no frequencies yet, residuals are just the original data
         return y, np.array([np.mean(y)])
 
-    # 1. Build the matrix
+    # Build the matrix of params 
     X = build_design_matrix(t, accepted_freqs)
     
-    # 2. Solve the linear system: X * params = y
-    # np.linalg.lstsq is robust for this kind of overdetermined system
+    # Solve the linear system X * params = y to fit
     params, _, _, _ = np.linalg.lstsq(X, y, rcond=None)
     
-    # 3. Calculate the model and the residuals
+    # Calculate the model and the residuals
     fitted_model = X @ params
     residuals = y - fitted_model
     
     return residuals, params
 
 def set_period_axes(ax, ylabel='Normalised Power'):
+    '''
+    Adds a secondary x-axis in years (top) to a matplotlib axis whose primary x-axis is in days (bottom).
+
+    In:
+        ax (matplotlib Axes): axis with period in days on the x-axis
+        ylabel (str): label for the y-axis
+
+    Out:
+        None
+    '''
     ax2 = ax.secondary_xaxis('top', functions=(lambda d: d / 365.25, lambda y: y * 365.25))
     ax2.set_xlabel('Period (years)')
     ax.set_xlabel('Period (days)')
@@ -129,40 +201,51 @@ def set_period_axes(ax, ylabel='Normalised Power'):
 # Now the function proper ----------
 
 def fit_peaks(df,
-            manual_freq = 'linear', period_range = [0.1, 100*365], n_periods = 100000, 
-            FAPs = [10,5,1,0.1], key_FAP_idx = -1, 
+            manual_freq = 'linear', period_range = [0.1, 100*365], n_periods = 100000,
+            FAPs = [10,5,1,0.1], key_FAP_idx = -1,
             threshold = 5,
             plot = True, verbose = True):
     '''
-    Iteratively finds the peaks of the LSP.
-    This will be used in the prior selsection process.
-    Finds one peak then checks if it is an alias or a window.
-    Also checks if it is too similar to a previous peak for the LSP to have resolved.
-    If that peak also satiesfies an SNR threshold, add it to an accepted periods list.
+    Iteratively finds significant LSP peaks, rejecting aliases, window functions, and low-SNR
+    detections. At each iteration the accepted frequencies are subtracted via simultaneous fit
+    before the next LSP is computed.
 
-    df is the dataframe being processed (training set)
-    manual_freq True means the period_range and n_periods defines the set of periods calculated.
-    Period_range is in days
+    In:
+        df (DataFrame): training dataframe with 'day' and 'sind' columns
+        manual_freq (str or None): 'linear', 'log', or None for astropy autopower
+        period_range (list): [min, max] period in days for the frequency grid
+        n_periods (int): number of frequency grid points
+        FAPs (list of floats): false alarm probability levels to be considered as percentages
+        key_FAP_idx (int): index into FAPs giving the detection threshold
+        threshold (float): minimum SNR required to accept a peak
+        plot (bool): whether to plot the LSP at each iteration
+        verbose (bool): whether to print accepted/rejected peak info
 
-    Returns a list of accepted periods.
+    Out:
+        accepted_peak_periods (array of floats): accepted periods in days
+        accepted_peak_heights (array of floats): LSP power at each accepted period
     '''
     accepted_peak_freqs = [] # We will work in frequency space for the analysis other than for the plotting. It is easier for the SNR fitting.
     accepted_peak_heights = [] # The concomitant power heights
 
+    # Choice of the periods to be searched
     if manual_freq == 'linear':
         min_period = period_range[0]
         max_period = period_range[1]
         periods = np.linspace(min_period, max_period, n_periods)
         freqs = 1 / periods
-    if manual_freq == 'log':
+
+    if manual_freq == 'log': # Use log regime to create uniform relative values 
         min_period = period_range[0]
         max_period = period_range[1]
         periods = np.logspace(np.log10(min_period), np.log10(max_period), n_periods)
         freqs = 1 / periods
 
-    resids = [df['sind']]
+    resids = [df['sind']] # The first residual is already defined
+
+    # For each iteration store for plotting
     iter_powers = [] # Add the LSPs here
-    iter_params = [] # Parameters of the simultaneous fit
+    iter_params = [] # Parameters of the simultaneous fit for each iteration
     iter_peak_freqs = [] # the full list of peaks found at each stage
     iter_invFAPs = [] # the list of powers corresponding to the FAPs
     iter_popts = [] # popts of the Gaussian fit
@@ -177,14 +260,17 @@ def fit_peaks(df,
     FAPs = np.array(FAPs)/100
 
     while True:
-        # Take the LSP : powers for the freqs
+        # Take the LSP: powers for the freqs
         ls = LombScargle(t, resids[i])
+
+        # Choice of which frequency range
         if manual_freq is None: # Use autopower
             freqs, powers = ls.autopower()
             periods = 1/freqs
         else:
             powers = ls.power(freqs)
 
+        # Finds teh concomitant powers
         power_invFAPs = ls.false_alarm_level(FAPs, method = 'bootstrap') 
         key_FAP = float(power_invFAPs[key_FAP_idx])
         # Identify FAPs above the key FAP
@@ -306,8 +392,8 @@ def fit_peaks(df,
             t_vals = np.array(t)
             sort_idx = np.argsort(t_vals)
 
-            ax_t.scatter(t_vals, prev_resid, s=2, color='orange',     alpha=0.5, label='Previous residual', zorder=1)
-            ax_t.scatter(t_vals, curr_resid, s=2, color='green', alpha=0.5, label='Residual',          zorder=2)
+            ax_t.scatter(t_vals, prev_resid, s=2, color='orange', alpha=0.5, label='Previous residual', zorder=1)
+            ax_t.scatter(t_vals, curr_resid, s=2, color='green', alpha=0.5, label='Residual', zorder=2)
             ax_t.plot(t_vals[sort_idx], fit_component[sort_idx], color='blue', lw=1, label='Simultaneous fit', zorder=3)
 
             ax_t.set_xlabel('Time (days)')

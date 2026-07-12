@@ -1,12 +1,28 @@
 #!/usr/bin/env python3
 """
 cadence_analysis.py
-Batch runner: apply the cadence analysis lookahead pipeline to every simulated star in
-Data/simulated/<rate>/ across all (or a specified) sampling-rate folders.
+This is a batch runner to apply the cadence analysis in helpers.pipeline ot the simulated stars
+which live in the Data/simulated/<rate>/ folders
 
-Results are written as per-star pickle files so the run is fully resumable.
-After each folder is complete a summary CSV is saved; a combined CSV is written
-at the end.
+The <rate> folders correspond to the cadences to which the simulated stars were sampled.
+
+The analysis is run on each star and is saved as a pickle file for each star.
+This makes the run resumable in the case of any crash or bug.
+Each pickle saves the dict returned by run_star():
+- star, n_obs, span_years, skipped, skip_reason
+- splits: list of per-train and per-valid-split dicts, each with
+  - best_combo, valid_metric_value, rho_mid_years, Q_mid, n_cycles_obs, is_const, aleatoric_frac_at_t0
+  - windows: list of per-lookahead dicts, each with
+    - lookahead_years, t0_year
+    - gpr_med, gpr_lb68, gpr_ub68, gpr_lb95, gpr_ub95 (GPR predicted minimum + CIs)
+    - truth_med, truth_lb, truth_ub (Fourier ground-truth minimum + 68% CI)
+    - error, abs_error, gpr_width_68, truth_width, in_68, in_95
+
+After each folder is complete a summary CSV for that cadence is saved.
+A combined CSV is writted from all of these once the end of the run is complete.
+These CSVs contain one row per (star, split, lookahead window), with all the
+split_idx and sampling_rate_days.
+
 
 Usage
 -----

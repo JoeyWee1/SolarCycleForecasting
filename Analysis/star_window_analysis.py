@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """
 analyse_star.py
-Batch runner: apply the GPR pipeline to every dataset in Data/mwd/ that
+Batch runner to apply the GPR pipeline to every dataset in Data/mwd/ that
 passes quality checks. One pickle file per star is written under --output_dir.
+
+GPR pipeline is includes the data splitting and cleaning, the GPR training, 
+model selection, parameter uncertainty MCMC, and the evaluation.
 
 Usage
 -----
