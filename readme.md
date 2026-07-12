@@ -7,7 +7,7 @@ Dissertation project submitted for the MPhil Data Intensive Science Programme.
 ---
 Exoplanets are detected by the radial velocity or transit methods, which rely on spectroscopic or photometric measurements respectively. However, non-exoplanetary noise in these measurements can be introduced by stellar activity. The high-precision instruments being used to take these measurements are also heavily oversubscribed. The magnitude of this noise is proportional to the stellar activity and has been shown to significantly affect exoplanet detectability. As such, by predicting the periods of lower stellar activity using data that can be taken using more modest instruments, the high-precision instrument observation schedules can be optimised such that they observe at the stellar activity minima to maximise detectability.
 
-This project has produced a scalable pipeline which creates these forecasts.
+This project has produced a scalable pipeline which creates these forecasts. The code for this pipeline lives in the helpers module.
 
 ## Repository Structure
 ---
@@ -27,7 +27,7 @@ Thesis/
 │   ├── simulated/                        # Simulated activity cycle datasets
 │   └── table_A2_full.csv            # Full stellar catalogue table used to generate simulated stars
 │
-├── helpers/                                 # Shared Python library
+├── helpers/                                 # Python library: main product of this work.
 │   ├── df_ops.py                          # Data loading, splitting, and cleaning
 │   ├── eval.py                               # Forecast evaluation metrics 
 │   ├── gpr.py                                # GPR kernel setup and NLL optimisation
@@ -250,7 +250,7 @@ It was used to:
     - Help wrapping code for use in HPC: "how could I write this for HPC use?"
     - Help identify test cases for continuous integration: "what should I test in xyz function and how could I do that?"
     - Standardising docstring formatting.
-    
+
 I would like to emphasise that the analysis, algorithm design, and thought processes are  *my own*.  Model outputs were always reviewed and checked against literature. No generated response was incorporated into the work without thorough verification.
 
 
