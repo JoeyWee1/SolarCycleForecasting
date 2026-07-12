@@ -178,11 +178,11 @@ def plot_return_errors(df, max_lookahead: int = 5):
     colors = plt.cm.viridis(np.linspace(0, 1, len(integer_lookaheads)))
     post_means = []
 
-    for color, la in zip(colors, integer_lookaheads):
+    for color, la in zip(colors, integer_lookaheads): # Plot each lookahead's KDE
         d = df[df['lookahead_years'] == la]['error'].dropna()
         xs = np.linspace(0, la, 300)
         kde_vals = gaussian_kde(d)(xs) + gaussian_kde(d)(-xs)
-        kde_vals /= np.trapezoid(kde_vals, xs)
+        kde_vals /= np.trapezoid(kde_vals, xs) #Normalise
         post_mean = np.trapezoid(xs * kde_vals, xs)
         post_means.append([la, post_mean])
         ax.plot(xs, kde_vals, color=color, lw=1.5, label=f'{int(la)} yr')
@@ -194,6 +194,7 @@ def plot_return_errors(df, max_lookahead: int = 5):
     plt.tight_layout()
     plt.show()
 
+    # Print results
     t = PrettyTable(['Lookahead (yr)', 'Post Mean (yr)'])
     t.float_format = '0.3'
     for la, pm in post_means:

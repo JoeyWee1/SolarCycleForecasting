@@ -13,18 +13,16 @@ from prettytable import PrettyTable
 
 from helpers.LSP_peaks import set_period_axes, fit_peaks
 
-#------------------------------
-
 def SM2016_intercepts(a):
     '''
     Computes the y-intercepts of the SM2016 log P_cyc vs log P_rot relation for F, G, K types,
     using the mean cycle and rotation periods from Tables 1 and 2 of Suárez Mascareño 2016.
 
     In:
-        a (float): slope of the relation (default 0.89)
+        a (float): slope of the relation 
 
     Out:
-        intercepts (dict): keys F, G, K; values are intercepts in log10 space
+        intercepts (dict): keys F, G, K; values are intercepts.
     '''
     mu_Pcycs = np.array([9.5, 6.7, 8.5]) # years
     mu_Pcycs *= 365 # now in days
@@ -42,7 +40,7 @@ def SM2016_s_to_m(P_rot, star_type, a = 0.89):
     In:
         P_rot (float): rotation period in days
         star_type (str): spectral type, one of F, G, K
-        a (float): slope of the relation (default 0.89)
+        a (float): slope of the relation 
 
     Out:
         P_cyc (float): predicted activity cycle period in days
@@ -60,7 +58,7 @@ def SM2016_m_to_s(P_cyc, star_type, a = 0.89):
     In:
         P_cyc (float): activity cycle period in days
         star_type (str): spectral type, one of F, G, K
-        a (float): slope of the relation (default 0.89)
+        a (float): slope of the relation 
 
     Out:
         P_rot (float): predicted rotation period in days
@@ -112,11 +110,6 @@ def find_classify_signals(df,
     # Take a LS to compare the powers on the same scale
     t = df['day']
     y = df['sind']
-
-    # ls = LombScargle(t, y)
-    
-    # peak_freqs = 1/peak_periods
-    # peak_powers = ls.power(peak_freqs)
 
     ls = LombScargle(t, y)
 
@@ -175,7 +168,7 @@ def find_classify_signals(df,
             table.add_row(["Long", f"{priors.get('long'):.2f}", f"{priors.get('long')/365:.2f}"])
         print(table)
     
-    return priors # Classified signal data, not priors. This goes into the get priors func. 
+    return priors # Classified signal data, not priors. This goes into the get priors func. This is bc the naming scheme got muddled but this is a local var so not a big problem
 
 def get_priors(classified_signal_data, star_type, verbose = True,
                         direct_bound_tol = 0.05, # For regular go between 0.95 and 1.05
@@ -184,7 +177,7 @@ def get_priors(classified_signal_data, star_type, verbose = True,
                ):
         '''
         Converts classified signal data into GP rho priors and bounds for each cycle range.
-        Missing periods are filled using SM2016 (if the complementary range was detected) or
+        Missing periods are filled using SM2016 if the complementary range was detected or
         literature means. The long-range prior defaults to 100 years if undetected.
 
         In:

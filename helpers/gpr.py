@@ -18,7 +18,7 @@ def set_params(log_params, k, gp):
     Parameter order is [log_sigma x k, log_rho x k, log_Q x k].
 
     In:
-        log_params (array of floats): log-space GP parameters, length 3k
+        log_params (array of floats): log-space GP parameters, length 3*k
         k (int): number of SHO terms
         gp (celerite2 GaussianProcess): the GP whose kernel will be updated
 
@@ -36,7 +36,7 @@ def NLL(log_params, gp, k, y):
     Computes the negative log-likelihood of the GP at the given log-space parameters.
 
     In:
-        log_params (array of floats): log-space GP parameters, length 3k
+        log_params (array of floats): log-space GP parameters, length 3*k
         gp (celerite2 GaussianProcess): the GP to evaluate
         k (int): number of SHO terms
         y (array of floats): S-index observations
@@ -68,9 +68,13 @@ def train_gpr(
         SEED = 1701
         ):
         '''
-        Interactive single-star GPR pipeline. Loads data, runs model selection across all kernel
+        Single-star GPR pipeline. Loads data, runs model selection across all kernel
         combos (1s, 1m, 1l, 2sm, 2ml, 2sl, 3sml, const), selects the best by NLPD on the
         validation set, and optionally plots the results.
+
+        This is not the final pipeline. It was the baseline GPR pipeline and is now deprecated.
+        It is frequently used in older notebools and is therefore included here.
+        For the current pipeline, see the pipeline submodule.
 
         In:
             datapath (str): path to the whitespace-separated data file
@@ -97,12 +101,10 @@ def train_gpr(
         data_df = prepare_df(raw_df, add_prefix=add_prefix, relative=relative)
 
         # Split the data
-        dirty_train_df, dirty_valid_df, test_df = split_df(data_df,
-                                                     train_split=train_split, valid_split=valid_split)
+        dirty_train_df, dirty_valid_df, test_df = split_df(data_df, train_split=train_split, valid_split=valid_split)
 
         # Clean the dataset for outliers
-        train_df, valid_df, _ = clean_df(dirty_train_df, dirty_valid_df, tol=4,
-                                verbose=verbose, plot=plot)
+        train_df, valid_df, _ = clean_df(dirty_train_df, dirty_valid_df, tol=4, verbose=verbose, plot=plot)
 
         # Classify signal data and get priors
         classified_signal_data = find_classify_signals(dirty_train_df,
@@ -124,26 +126,26 @@ def train_gpr(
 
         # Define the prior combos to try (k, [[q_priors], [rho_priors]])
         prior_combos = {
-                "1s":    {'k': 1, 'q_priors': None,          'cycle_keys': ['short']},
-                "1m":    {'k': 1, 'q_priors': None,          'cycle_keys': ['mid']},
-                "1l":    {'k': 1, 'q_priors': None,          'cycle_keys': ['long']},
+                "1s":    {'k': 1, 'q_priors': None, 'cycle_keys': ['short']},
+                "1m":    {'k': 1, 'q_priors': None, 'cycle_keys': ['mid']},
+                "1l":    {'k': 1, 'q_priors': None, 'cycle_keys': ['long']},
 
-                "2sm":   {'k': 2, 'q_priors': None,          'cycle_keys': ['short', 'mid']},
-                "2ml":   {'k': 2, 'q_priors': None,          'cycle_keys': ['mid',   'long']},
-                "2sl":   {'k': 2, 'q_priors': None,          'cycle_keys': ['short', 'long']},
+                "2sm":   {'k': 2, 'q_priors': None, 'cycle_keys': ['short', 'mid']},
+                "2ml":   {'k': 2, 'q_priors': None, 'cycle_keys': ['mid',   'long']},
+                "2sl":   {'k': 2, 'q_priors': None, 'cycle_keys': ['short', 'long']},
 
-                "3sml":  {'k': 3, 'q_priors': None,          'cycle_keys': ['short', 'mid', 'long']},
+                "3sml":  {'k': 3, 'q_priors': None, 'cycle_keys': ['short', 'mid', 'long']},
 
-                "const": {'k': 1, 'q_priors': "overdamped",  'cycle_keys': ['mid']},
+                "const": {'k': 1, 'q_priors': "overdamped", 'cycle_keys': ['mid']},
         }
 
         if require_mid:
                 prior_combos = {key: val for key, val in prior_combos.items() if 'mid' in val['cycle_keys']}
 
         # Set up the loop
-        best_combo  = None
-        best_NLPD   = np.inf
-        best_gp     = None
+        best_combo = None
+        best_NLPD  = np.inf
+        best_gp = None
         best_params = None
 
         # Run the loop
@@ -155,10 +157,10 @@ def train_gpr(
                 np.random.seed(SEED)
 
                 #---- q priors----
-                if q_prior_type == 'overdamped':
-                        q_0s     = [np.random.uniform(0, 0.5) for _ in range(k)]
+                if q_prior_type == 'overdamped': # andles the constant regime
+                        q_0s = [np.random.uniform(0, 0.5) for _ in range(k)] 
                 else:
-                        q_0s     = [np.random.uniform(0.5, 1) for _ in range(k)]
+                        q_0s = [np.random.uniform(0.5, 1) for _ in range(k)]
 
                 #---remaining priors----
                 sigma_0s = [train_std / k for _ in range(k)]
@@ -172,13 +174,13 @@ def train_gpr(
 
                 #----q bounds-----
                 if q_prior_type == 'overdamped':
-                        q_bounds     = [(-np.inf, np.log(0.5)) for _ in range(k)]
+                        q_bounds = [(-np.inf, np.log(0.5)) for _ in range(k)]
                 else:
-                        q_bounds     = [(np.log(q_bounds_in[0]), np.log(q_bounds_in[1])) for _ in range(k)]
+                        q_bounds = [(np.log(q_bounds_in[0]), np.log(q_bounds_in[1])) for _ in range(k)]
 
-                sigma_upper  = train_std * sigma_upper_mult
+                sigma_upper = train_std * sigma_upper_mult
                 sigma_bounds = [(np.log(1e-4), np.log(sigma_upper)) for _ in range(k)]
-                rho_bounds   = np.log([rho_prior_bounds[cycle_key] for cycle_key in cycle_keys])
+                rho_bounds = np.log([rho_prior_bounds[cycle_key] for cycle_key in cycle_keys])
 
                 bounds = np.concatenate([sigma_bounds, rho_bounds, q_bounds])
 
@@ -270,13 +272,13 @@ def train_gpr(
         std = np.sqrt(cov)
         results = pd.DataFrame({
                 'forecast': mu,
-                'lower':    mu - std,
-                'upper':    mu + std,
+                'lower': mu - std,
+                'upper': mu + std,
         }, index=sampled_days)
 
         # Convert sampled days to years for plotting
-        day_ref       = train_df['day'].iloc[0]
-        year_ref      = train_df['year'].iloc[0]
+        day_ref = train_df['day'].iloc[0]
+        year_ref = train_df['year'].iloc[0]
         sampled_years = year_ref + (sampled_days - day_ref) / 365.25
 
         if results_verbose: # Print best model params
@@ -284,11 +286,10 @@ def train_gpr(
                 k = prior_combos[best_combo]['k']
                 table = PrettyTable(["sigma", "Q", "rho (days)", "rho (years)"])
                 best_sigmas = best_params[0:k]
-                best_rhos   = best_params[k:2*k]
-                best_qs     = best_params[2*k:]
+                best_rhos = best_params[k:2*k]
+                best_qs = best_params[2*k:]
                 for k_idx in range(k):
-                        table.add_row([f"{best_sigmas[k_idx]:.4f}", f"{best_qs[k_idx]:.2f}",
-                                       f"{best_rhos[k_idx]:.2f}", f"{best_rhos[k_idx]/365:.2f}"])
+                        table.add_row([f"{best_sigmas[k_idx]:.4f}", f"{best_qs[k_idx]:.2f}", f"{best_rhos[k_idx]:.2f}", f"{best_rhos[k_idx]/365:.2f}"])
                 print(table)
 
         if results_plot: # Plot best model predictions
@@ -297,7 +298,6 @@ def train_gpr(
                 ax.scatter(train_df['year'], train_df['sind'], color='blue', label='Training', marker='x')
                 ax.scatter(valid_df['year'], valid_df['sind'], color='orange', label='Actual', alpha=0.5, marker = 'x')
                 
-
                 ax.set_title(f"Best model for {star_name} is {best_combo}")
                 ax.plot(sampled_years, results['forecast'], color='green', label='Predictions')
                 ax.fill_between(sampled_years, results['lower'], results['upper'],

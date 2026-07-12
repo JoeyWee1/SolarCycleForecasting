@@ -20,13 +20,18 @@ def lnPost_gp(log_params, gp, k, y, initial_guesses, bounds, prior_std=3):
     Out:
         log_posterior (float): log-posterior value, or -inf if the point is rejected
     '''
+    # Out of bounds returns -inf
     if np.any(log_params < bounds[:, 0]) or np.any(log_params > bounds[:, 1]):
         return -np.inf
+    
+    # Get the log likelihood
     gp = set_params(log_params, k, gp)
     gp.recompute(quiet=True)
     lnL = gp.log_likelihood(y)
     if not np.isfinite(lnL):
         return -np.inf
+
+    # REturn the sum 
     return lnL - 0.5 * np.sum(((np.exp(log_params) - np.exp(initial_guesses)) / prior_std) ** 2)
 
 def plot_trace(sampler, param_names=None):
@@ -40,7 +45,7 @@ def plot_trace(sampler, param_names=None):
     Out:
         None
     '''
-    samples = sampler.get_chain()  # shape: (n_steps, n_walkers, n_params)
+    samples = sampler.get_chain()  # (n_steps, n_walkers, n_params)
     n_steps, n_walkers, n_params = samples.shape
 
     if param_names is None:

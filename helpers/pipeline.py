@@ -58,20 +58,23 @@ def star_window_analysis(datapath, star_name, star_type='G', add_prefix=False,
                     truth_med, truth_lb, truth_ub,
                     error, abs_error, in_68, in_95, gpr_width_68, truth_width
     '''
+    # Reproducible results!!!
     np.random.seed(SEED)
 
     #---Data Loading---
     try:
         raw_df = pd.read_csv(datapath, sep=r'\s+', skip_blank_lines=True)
         data_df = prepare_df(raw_df, add_prefix=add_prefix, relative=True)
-    except Exception as e:
+    except Exception as e: # Fails gracefully
         return {'star': star_name, 'skipped': True, 'skip_reason': f'load error: {e}', 'splits': []}
 
+    # Skip stars with too few observations
     n_obs = len(data_df)
     if n_obs < 100:
-        return {'star': star_name, 'n_obs': n_obs, 'skipped': True,
+        return {'star': star_name, 'n_obs': n_obs, 'skipped': True, # Log failures
                 'skip_reason': 'fewer than 100 observations', 'splits': []}
 
+    # Skip stars with too short a time span
     span = data_df['year'].iloc[-1] - data_df['year'].iloc[0]
     if span < 1:
         return {'star': star_name, 'n_obs': n_obs, 'span_years': span,
@@ -80,21 +83,22 @@ def star_window_analysis(datapath, star_name, star_type='G', add_prefix=False,
     data_df = downsample_min_gap(data_df, min_gap)
 
     #---Build Windows---
+    # Evenly spaced train split fractions across data
     n_win = n_target_windows
     divide_train_splits = [(0.75 / n_win) * n for n in range(1, n_win + 1)]
-    span_train_split = (
-        (data_df['year'] < data_df['year'].iloc[0] + 0.15 * span).sum() / len(data_df)
-    )
+    span_train_split = ((data_df['year'] < data_df['year'].iloc[0] + 0.15 * span).sum() / len(data_df))
     raw_train_splits = np.maximum(divide_train_splits, span_train_split)
     train_splits = np.unique(raw_train_splits)
     train_idxs = np.round(len(data_df) * train_splits).astype(int)
 
+    # Validation split sized to span approx 20% of total time
     span_valid_splits = np.array([
         (data_df['year'] < data_df['year'].iloc[idx] + 0.2 * span).sum() / len(data_df) - ts
         for idx, ts in zip(train_idxs, train_splits)
     ])
     valid_splits = np.maximum(0.1, span_valid_splits)
 
+    # Drop splits where train+valid would exhaust the data
     retraining_split = train_splits + valid_splits
     mask = retraining_split < 1
     train_splits = train_splits[mask]
@@ -102,6 +106,7 @@ def star_window_analysis(datapath, star_name, star_type='G', add_prefix=False,
     train_idxs = train_idxs[mask]
     retraining_split = retraining_split[mask]
 
+    # Compute retraining end indices; fallback to single split if none remain
     retraining_idxs = np.round(len(data_df) * retraining_split).astype(int)
     mask_ib = retraining_idxs < len(data_df)
     train_splits = train_splits[mask_ib]
@@ -119,6 +124,7 @@ def star_window_analysis(datapath, star_name, star_type='G', add_prefix=False,
         valid_splits = np.array([remaining / 2])
         retraining_idxs = np.round(len(data_df) * (train_splits + valid_splits)).astype(int)
 
+    # Per-split test start times and integer lookahead lengths
     test_t0s = data_df['year'].iloc[retraining_idxs - 1].to_numpy()
     test_spans = data_df['year'].iloc[-1] - test_t0s
     test_window_lenss = [
@@ -136,19 +142,18 @@ def star_window_analysis(datapath, star_name, star_type='G', add_prefix=False,
     if require_mid:
         prior_combos = {nm: v for nm, v in prior_combos.items() if 'mid' in v['cycle_keys']}
 
+    # Collect per-split results
     split_results = []
 
     for train_split, valid_split, test_window_lens in zip(
             train_splits, valid_splits, test_window_lenss):
 
         try:
-            #---Rebuild Window Splits---
-            dirty_train_df, dirty_valid_df, test_df = split_df(
-                data_df, train_split=train_split, valid_split=valid_split)
-            train_df, valid_df, MAD = clean_df(
-                dirty_train_df, dirty_valid_df, tol=4, verbose=False, plot=False)
+            # Rebuild window splits
+            dirty_train_df, dirty_valid_df, test_df = split_df(data_df, train_split=train_split, valid_split=valid_split)
+            train_df, valid_df, MAD = clean_df(dirty_train_df, dirty_valid_df, tol=4, verbose=False, plot=False)
 
-            #---Find prior on training set---
+            #Find priors
             classified_signal_data = find_classify_signals(
                 dirty_train_df,
                 plot_fitpeaks=False, verbose_fitpeaks=False,
@@ -161,6 +166,7 @@ def star_window_analysis(datapath, star_name, star_type='G', add_prefix=False,
                 verbose=False)
 
             #---Compare each combination---
+            # Training set summary statistics
             train_yerr = train_df['sind'] * error_percent / 100
             train_mean = train_df['sind'].mean()
             train_std = train_df['sind'].std()
@@ -171,13 +177,15 @@ def star_window_analysis(datapath, star_name, star_type='G', add_prefix=False,
                 q_prior_type = combo_info['q_priors']
                 cycle_keys_c = combo_info['cycle_keys']
 
+                # Initial parameter guesses
                 np.random.seed(SEED)
                 q_0s = ([np.random.uniform(0, 0.5) for _ in range(k_c)]
-                        if q_prior_type == 'overdamped'
+                        if q_prior_type == 'overdamped' # Not used but there for future generality
                         else [np.random.uniform(0.5, 1) for _ in range(k_c)])
                 sigma_0s = [train_std / k_c for _ in range(k_c)]
                 rho_0s = [rho_priors[ck] for ck in cycle_keys_c]
 
+                # Parameter bounds
                 ig_raw = np.concatenate([sigma_0s, rho_0s, q_0s])
                 q_bnd = ([(- np.inf, np.log(0.5)) for _ in range(k_c)]
                          if q_prior_type == 'overdamped'
@@ -188,9 +196,11 @@ def star_window_analysis(datapath, star_name, star_type='G', add_prefix=False,
                 rho_bnd = np.log([rho_prior_bounds[ck] for ck in cycle_keys_c])
                 bounds_c = np.concatenate([sigma_bnd, rho_bnd, q_bnd])
 
+                # Perturbed restarts for multi-start optimisation
                 perturbs = ig_raw * 0.1 * np.random.normal(size=(25, len(ig_raw)))
                 perturbed = np.log(np.clip(ig_raw + perturbs, 1e-6, None))
 
+                # Best L-BFGS-B result across all restarts
                 best_NLL, best_res_c = np.inf, None
                 for ig in perturbed:
                     kernel = terms.SHOTerm(sigma=sigma_0s[0], rho=rho_0s[0], Q=q_0s[0])
@@ -203,22 +213,26 @@ def star_window_analysis(datapath, star_name, star_type='G', add_prefix=False,
                     if res.fun < best_NLL:
                         best_NLL, best_res_c = res.fun, res
 
+                # Extract best-fit parameters
                 gp = set_params(best_res_c.x, k_c, gp)
                 gp.recompute()
                 bp = np.exp(best_res_c.x)
 
+                # Predict on validation set
                 mu, cov = gp.predict(train_df['sind'], t=valid_df['day'], return_var=True)
                 y_valid = valid_df['sind'].to_numpy()
                 valid_yerr = valid_df['sind'] * error_percent / 100
                 total_var = cov + valid_yerr ** 2
                 total_std = np.sqrt(total_var)
 
+                # Compute NLPD and CRPS
                 nlpd = (0.5 * np.log(2 * np.pi * total_var)
                         + (y_valid - mu) ** 2 / (2 * total_var)).mean()
                 z = (y_valid - mu) / total_std
                 crps = (total_std * (z * (2 * norm.cdf(z) - 1)
                         + 2 * norm.pdf(z) - 1 / np.sqrt(np.pi))).mean()
 
+                # Store combo metrics
                 combo_results[combo_name] = {
                     'NLPD': nlpd, 'CRPS': crps,
                     'params': bp, 'bounds': bounds_c,
@@ -282,15 +296,14 @@ def star_window_analysis(datapath, star_name, star_type='G', add_prefix=False,
             t_pred_start = retrain_df['day'].iloc[-1]
             t_pred_start_year = retrain_df['year'].iloc[-1]
             t_ring_end = t_pred_start + 365
-            t_pred_end = max(t_pred_start + 365 * pred_forward_years,
-                             test_df['day'].iloc[-1])
+            t_pred_end = max(t_pred_start + 365 * pred_forward_years, test_df['day'].iloc[-1])
 
             sampled_days = np.concatenate([
                 np.arange(t_pred_start - 365 * 0.5, t_ring_end, low_cad),
-                np.arange(t_ring_end, t_pred_end, high_cad),
-            ])
+                np.arange(t_ring_end, t_pred_end, high_cad)])
             sampled_years = t0_year + (sampled_days - t0_day) / 365.25
 
+            # Generate MCMC predictive ensemble
             preds, pred_vars = [], []
             for ln_s in ln_samples:
                 set_params(ln_s, k, gp_retrain)
@@ -298,6 +311,7 @@ def star_window_analysis(datapath, star_name, star_type='G', add_prefix=False,
                 p, pv = gp_retrain.predict(retrain_df['sind'], t=sampled_days, return_var=True)
                 preds.append(p); pred_vars.append(pv)
 
+            # Decompose variance into aleatoric and epistemic
             preds = np.array(preds)
             pred_vars = np.array(pred_vars)
             aleatoric = pred_vars.mean(axis=0)
@@ -323,6 +337,7 @@ def star_window_analysis(datapath, star_name, star_type='G', add_prefix=False,
             tot_var_t0 = ale_t0 + epi_t0
             aleatoric_frac = ale_t0 / tot_var_t0 if tot_var_t0 > 0 else np.nan
 
+            # Extract mid-cycle period and quality factor
             mid_idx = cycle_keys.index('mid')
             rho_mid_days = retrain_params[k + mid_idx]
             rho_mid_years = rho_mid_days / 365.25
@@ -358,7 +373,9 @@ def star_window_analysis(datapath, star_name, star_type='G', add_prefix=False,
                     truth_med, (truth_lb, truth_ub) = truth_in_x(
                         fourier_preds, fourier_t_year, t_pred_start_year, float(w_len))
                 except Exception:
-                    truth_med = truth_lb = truth_ub = np.nan
+                    truth_med = np.nan
+                    truth_lb = np.nan
+                    truth_ub = np.nan
 
                 error = gpr_med - truth_med if not np.isnan(truth_med) else np.nan
                 windows.append({
@@ -407,7 +424,7 @@ def star_window_analysis(datapath, star_name, star_type='G', add_prefix=False,
 
 def results_to_df(results_list):
     '''
-    Flattens a list of star_window_analysis() dicts into a tidy per-(star, split, window) DataFrame.
+    Flattens a list of star_window_analysis() dicts into a per-(star, split, window) DataFrame.
     Skipped stars are excluded.
 
     In:
@@ -423,7 +440,7 @@ def results_to_df(results_list):
     '''
     rows = []
     for r in results_list:
-        if r.get('skipped', False):
+        if r.get('skipped', False): # Do not include skipped stars
             continue
         for split_idx, split in enumerate(r['splits']):
             base = {
@@ -440,7 +457,7 @@ def results_to_df(results_list):
                 'valid_metric_value': split['valid_metric_value'],
             }
             for win in split['windows']:
-                rows.append({**base, **win})
+                rows.append({**base, **win}) # Append the merged dictionary
     return pd.DataFrame(rows)
 
 def run_star(datapath, star_name, star_type='G', add_prefix=False,
@@ -452,10 +469,10 @@ def run_star(datapath, star_name, star_type='G', add_prefix=False,
              verbose=False, plot=False):
     '''
     Runs the full GPR on one star using a fixed 75/25 train/validation split with no test set.
-    Intended for single-star inspection rather than the sliding-window evaluation pipeline.
-
+    *THIS CREATES FORWARD PREDICTIONS FOR THE LOOKAHEAD YEARS*
+    
     In:
-        datapath (str): path to the whitespace-separated data file
+        datapath (str): path to the data file
         star_name (str): identifier used in plot titles
         star_type (str): spectral type, one of F, G, K, ME, MM
         add_prefix (bool): add 2400000 to JD if the file uses truncated Julian dates
@@ -482,13 +499,16 @@ def run_star(datapath, star_name, star_type='G', add_prefix=False,
             sampled_years (ndarray): shape (n_times,) year grid for predictions
             best_in_x (dict): keyed by lookahead value; each entry is {med, lb, ub} in years
     '''
+    # Reproducibility
     np.random.seed(SEED)
 
+    # Normalise lookahead_years to array in case a float is entered
     lookaheads = np.atleast_1d(lookahead_years)
 
     #---Data Loading---
     raw_df = pd.read_csv(datapath, sep=r'\s+', skip_blank_lines=True)
     data_df = prepare_df(raw_df, add_prefix=add_prefix, relative=True)
+    # Remove closely-spaced observations
     data_df = downsample_min_gap(data_df, min_gap)
 
     #---Split 75/25---
@@ -515,6 +535,7 @@ def run_star(datapath, star_name, star_type='G', add_prefix=False,
     if require_mid:
         prior_combos = {nm: v for nm, v in prior_combos.items() if 'mid' in v['cycle_keys']}
 
+    # Training set summary statistics
     train_yerr = train_df['sind'] * error_percent / 100
     train_mean = train_df['sind'].mean()
     train_std = train_df['sind'].std()
@@ -525,6 +546,7 @@ def run_star(datapath, star_name, star_type='G', add_prefix=False,
         q_prior_type = combo_info['q_priors']
         cycle_keys = combo_info['cycle_keys']
 
+        # Initial parameter guesses
         np.random.seed(SEED)
         q_0s = ([np.random.uniform(0, 0.5) for _ in range(k)]
                 if q_prior_type == 'overdamped'
@@ -532,6 +554,7 @@ def run_star(datapath, star_name, star_type='G', add_prefix=False,
         sigma_0s = [train_std / k for _ in range(k)]
         rho_0s = [rho_priors[ck] for ck in cycle_keys]
 
+        # Parameter bounds
         ig_raw = np.concatenate([sigma_0s, rho_0s, q_0s])
         q_bounds = ([(- np.inf, np.log(0.5)) for _ in range(k)]
                     if q_prior_type == 'overdamped'
@@ -540,9 +563,11 @@ def run_star(datapath, star_name, star_type='G', add_prefix=False,
         rho_bounds = np.log([rho_prior_bounds[ck] for ck in cycle_keys])
         bounds = np.concatenate([sigma_bounds, rho_bounds, q_bounds])
 
+        # Perturbed restarts for multi-start optimisation
         perturbs = ig_raw * 0.1 * np.random.normal(size=(25, len(ig_raw)))
         perturbed = np.log(np.clip(ig_raw + perturbs, 1e-6, None))
 
+        # Best L-BFGS-B result across all restarts
         best_NLL, best_res = np.inf, None
         for ig in perturbed:
             kernel = terms.SHOTerm(sigma=sigma_0s[0], rho=rho_0s[0], Q=q_0s[0])
@@ -555,22 +580,27 @@ def run_star(datapath, star_name, star_type='G', add_prefix=False,
             if res.fun < best_NLL:
                 best_NLL, best_res = res.fun, res
 
+        # Extract best-fit parameters
         gp = set_params(best_res.x, k, gp)
         gp.recompute()
         bp = np.exp(best_res.x)
 
+        # Predict on validation set
         mu, cov = gp.predict(train_df['sind'], t=valid_df['day'], return_var=True)
         y_valid = valid_df['sind'].to_numpy()
         valid_yerr = valid_df['sind'] * error_percent / 100
         total_var = cov + valid_yerr ** 2
         total_std = np.sqrt(total_var)
 
+        # Compute NLPD and CRPS
         nlpd = (0.5 * np.log(2 * np.pi * total_var) + (y_valid - mu) ** 2 / (2 * total_var)).mean()
         z = (y_valid - mu) / total_std
         crps = (total_std * (z * (2 * norm.cdf(z) - 1) + 2 * norm.pdf(z) - 1 / np.sqrt(np.pi))).mean()
 
+        # Store combo metrics
         combo_results[combo_name] = {'NLPD': nlpd, 'CRPS': crps, 'params': bp, 'bounds': bounds}
 
+    # Select best model by chosen metric
     best_metric, best_combo_name = np.inf, None
     for cname, cr in combo_results.items():
         if cr[valid_metric] < best_metric:
@@ -587,6 +617,7 @@ def run_star(datapath, star_name, star_type='G', add_prefix=False,
     retrain_yerr = retrain_df['sind'] * error_percent / 100
     retrain_mean = retrain_df['sind'].mean()
 
+    # Build kernel from best params and refit
     p0 = best_params
     kernel = terms.SHOTerm(sigma=p0[0], rho=p0[k], Q=p0[2*k])
     for ki in range(1, k):
@@ -603,6 +634,7 @@ def run_star(datapath, star_name, star_type='G', add_prefix=False,
     retrain_params = np.exp(retrain_res.x)
 
     #---MCMC Posterior---
+    # Initialise walkers near MAP solution
     np.random.seed(SEED)
     y = retrain_df['sind'].to_numpy()
     wsc = np.log(retrain_params) + 1e-5 * np.random.randn(n_walkers, len(retrain_params))
@@ -611,6 +643,7 @@ def run_star(datapath, star_name, star_type='G', add_prefix=False,
         args=(gp_retrain, k, y, retrain_res.x, best_bounds))
     sampler.run_mcmc(wsc, nsteps=total_sample_count, progress=False)
 
+    # Discard burn-in and subsample chains
     ln_chains = sampler.get_chain(discard=1000)
     ln_samples = ln_chains.reshape(-1, ln_chains.shape[-1])
     np.random.seed(SEED)
@@ -625,6 +658,7 @@ def run_star(datapath, star_name, star_type='G', add_prefix=False,
     sampled_days = np.arange(t_pred_start, t_pred_start + n_days_forward, high_cad)
     sampled_years = t0_year + (sampled_days - t0_day) / 365.25
 
+    # Generate MCMC predictive ensemble
     preds = []
     for ln_s in ln_samples:
         set_params(ln_s, k, gp_retrain)
