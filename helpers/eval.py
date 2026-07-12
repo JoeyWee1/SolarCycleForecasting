@@ -11,13 +11,13 @@ def check_constant(predictions, MAD, tol=2, percentile=84):
     Uses the chosen percentile of peak-to-trough amplitude across MCMC draws, relative to the MAD.
 
     In:
-        predictions (ndarray): shape (n_samples, n_times) array of MCMC prediction draws
-        MAD (float): median absolute deviation from clean_df, used as a noise reference
-        tol (float): amplitude/MAD ratio below which predictions are flagged as constant
-        percentile (float): which percentile of per-draw amplitudes to use
+        - predictions (ndarray): shape (n_samples, n_times) array of MCMC prediction draws
+        - MAD (float): median absolute deviation from clean_df, used as a noise reference
+        - tol (float): amplitude/MAD ratio below which predictions are flagged as constant
+        - percentile (float): which percentile of per-draw amplitudes to use
 
     Out:
-        is_constant (bool): True if predictions are near-constant
+        - is_constant (bool): True if predictions are near-constant
     '''
     amps = predictions.max(axis=1) - predictions.min(axis=1)
     return np.percentile(amps, percentile) / MAD < tol
@@ -28,14 +28,14 @@ def best_in_x(predictions, t, lookahead_years, t_start=None):
     Finds the predicted activity minimum within a lookahead window starting at t_start.
 
     In:
-        predictions (ndarray): shape (n_samples, n_times) array of MCMC prediction draws
-        t (array of floats): time axis in days, matching axis 1 of predictions
-        lookahead_years (float): length of the lookahead window in years
-        t_start (float): start of the window in days; defaults to t[0]
+        - predictions (ndarray): shape (n_samples, n_times) array of MCMC prediction draws
+        - t (array of floats): time axis in days, matching axis 1 of predictions
+        - lookahead_years (float): length of the lookahead window in years
+        - t_start (float): start of the window in days; defaults to t[0]
 
     Out:
-        median_min_day (float): median predicted time of minimum in days
-        bounds (tuple): (lb_day, ub_day) 16th and 84th percentile bounds in days
+        - median_min_day (float): median predicted time of minimum in days
+        - bounds (tuple): (lb_day, ub_day) 16th and 84th percentile bounds in days
     '''
     t_start = t_start if t_start is not None else t[0]
     t_end = t_start + lookahead_years * 365
@@ -54,21 +54,21 @@ def fit_Fourier(raw_data_df, MAD, med_ref, rho_priors, test_df,
     Applies an exponential time-weighting that downweights old observations in the training set.
 
     In:
-        raw_data_df (DataFrame): full data with 'day', 'year', and 'sind' columns
-        MAD (float): median absolute deviation threshold for restricting to the minimum region
-        med_ref (float): median S-index of the training set, used as the MAD reference
-        rho_priors (dict): must contain 'mid' key giving the mid-cycle period in days
-        test_df (DataFrame): used to set the exponential weighting reference date
-        error_percent (float): assumed percentage measurement error on S-index
-        n_walkers (int): number of emcee walkers
-        subsample (int): number of MCMC draws to retain for output
+        - raw_data_df (DataFrame): full data with 'day', 'year', and 'sind' columns
+        - MAD (float): median absolute deviation threshold for restricting to the minimum region
+        - med_ref (float): median S-index of the training set, used as the MAD reference
+        - rho_priors (dict): must contain 'mid' key giving the mid-cycle period in days
+        - test_df (DataFrame): used to set the exponential weighting reference date
+        - error_percent (float): assumed percentage measurement error on S-index
+        - n_walkers (int): number of emcee walkers
+        - subsample (int): number of MCMC draws to retain for output
 
     Out:
-        model_preds (ndarray): shape (subsample, 2000) array of Fourier model samples
-        mean_pred (ndarray): shape (2000,) posterior mean
-        lb (ndarray): shape (2000,) 16th percentile
-        ub (ndarray): shape (2000,) 84th percentile
-        t_plot_year (ndarray): shape (2000,) year axis for the above arrays
+        - model_preds (ndarray): shape (subsample, 2000) array of Fourier model samples
+        - mean_pred (ndarray): shape (2000,) posterior mean
+        - lb (ndarray): shape (2000,) 16th percentile
+        - ub (ndarray): shape (2000,) 84th percentile
+        - t_plot_year (ndarray): shape (2000,) year axis for the above arrays
     '''
     # Clean the dataset with MAD 
     fourier_df = raw_data_df[(raw_data_df['sind'] - med_ref).abs() < MAD].reset_index(drop=True)
@@ -144,14 +144,14 @@ def truth_in_x(model_preds, t_plot_year, t0_year, lookahead_years):
     Extracts the Fourier ground-truth activity minimum within a lookahead window.
 
     In:
-        model_preds (ndarray): shape (n_samples, n_times) Fourier model draws
-        t_plot_year (array of floats): year axis matching axis 1 of model_preds
-        t0_year (float): start of the lookahead window in years
-        lookahead_years (float): length of the window in years
+        - model_preds (ndarray): shape (n_samples, n_times) Fourier model draws
+        - t_plot_year (array of floats): year axis matching axis 1 of model_preds
+        - t0_year (float): start of the lookahead window in years
+        - lookahead_years (float): length of the window in years
 
     Out:
-        median_min_year (float): median predicted time of minimum in years
-        bounds (tuple): (lb_year, ub_year) 16th and 84th percentile bounds in years
+        - median_min_year (float): median predicted time of minimum in years
+        - bounds (tuple): (lb_year, ub_year) 16th and 84th percentile bounds in years
     '''
     mask = (t_plot_year >= t0_year) & (t_plot_year <= t0_year + lookahead_years)
     window_t  = t_plot_year[mask]
@@ -165,11 +165,11 @@ def plot_return_errors(df, max_lookahead: int = 5):
     Plots the absolute-error KDE for each integer lookahead year and prints the posterior mean error.
 
     In:
-        df (DataFrame): results with 'lookahead_years' and 'error' columns
-        max_lookahead (int): maximum lookahead year to include
+        - df (DataFrame): results with 'lookahead_years' and 'error' columns
+        - max_lookahead (int): maximum lookahead year to include
 
     Out:
-        None
+        - None
     '''
     # Extract the lookaheads
     integer_lookaheads = sorted(df[(df['lookahead_years'] % 1 == 0) & (df['lookahead_years'] <= max_lookahead)]['lookahead_years'].unique())
@@ -206,12 +206,12 @@ def plot_cadence_analysis(df, max_lookahead: int = 5, savefig = None):
     Plots absolute-error KDEs per lookahead year, with one curve per sampling cadence.
 
     In:
-        df (DataFrame): results with 'lookahead_years', 'sampling_rate_days', and 'error' columns
-        max_lookahead (int): maximum lookahead year to include
-        savefig (str or None): file path to save the figure; displays if None
+        - df (DataFrame): results with 'lookahead_years', 'sampling_rate_days', and 'error' columns
+        - max_lookahead (int): maximum lookahead year to include
+        - savefig (str or None): file path to save the figure; displays if None
 
     Out:
-        None
+        - None
     '''
     # Get the first max_years of lookaheads
     integer_lookaheads = sorted(df[(df['lookahead_years'] % 1 == 0) & (df['lookahead_years'] <= max_years)]['lookahead_years'].unique())
