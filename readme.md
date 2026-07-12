@@ -241,6 +241,7 @@ warnings.filterwarnings('ignore', message='invalid value encountered in scalar s
 ---
 LLMs, specifically Claude Sonnet 5, were used to support this work. 
 It was used to:
+
     - Help debug code when human attempts failed.
     - Improve low efficiency code: "how could this code be made more efficient?"
     - Help with some of the more esoteric Matplotlib functions: "how do I make this plot look like xyz?"
@@ -249,6 +250,7 @@ It was used to:
     - Help wrapping code for use in HPC: "how could I write this for HPC use?"
     - Help identify test cases for continuous integration: "what should I test in xyz function and how could I do that?"
     - Standardising docstring formatting.
+    
 I would like to emphasise that the analysis, algorithm design, and thought processes are  *my own*.  Model outputs were always reviewed and checked against literature. No generated response was incorporated into the work without thorough verification.
 
 
