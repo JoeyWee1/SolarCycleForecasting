@@ -103,7 +103,7 @@ Thesis/
 │   └── test_priors.py
 │
 ├── docs/                                       # Sphinx API documentation
-│   ├── _build/                             # Generated HTML output
+│   ├── _build/                             # Generated HTML output (not tracked)
 │   ├── analysis.rst                        # Autodoc page for Analysis scripts
 │   ├── conf.py                             # Sphinx configuration
 │   ├── helpers.rst                         # Autodoc page for helpers package
