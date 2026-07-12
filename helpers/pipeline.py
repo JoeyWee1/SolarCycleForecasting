@@ -26,28 +26,28 @@ def star_window_analysis(datapath, star_name, star_type='G', add_prefix=False,
     Flatten the output with results_to_df().
 
     In:
-        datapath (str): path to the whitespace-separated data file
-        star_name (str): identifier used in the output dict
-        star_type (str): spectral type, one of F, G, K, ME, MM
-        add_prefix (bool): add 2400000 to JD if the file uses truncated Julian dates
-        error_percent (float): assumed percentage measurement error on S-index
-        sigma_upper_mult (float): upper bound on sigma as a multiple of the training std
-        q_bounds_in (tuple): (lower, upper) Q bounds for underdamped SHO terms
-        n_target_windows (int): target number of train/valid splits
-        min_gap (float): minimum gap in days between observations after downsampling
-        n_walkers (int): number of emcee walkers
-        total_sample_count (int): total MCMC steps per run
-        subsample (int): number of MCMC draws to retain for prediction
-        SEED (int): random seed
-        pred_forward_years (float): minimum years to predict beyond the training data
-        low_cad / high_cad (float): day spacing for the near/far prediction grid
-        direct_bound_tol / sm2016_bound_tol / mean_bound_tol (float): prior bound tolerances
-        require_mid (bool): if True, discard kernel combos without a mid-range term
-        valid_metric (str): 'CRPS' or 'NLPD', used for model selection
-        verbose (bool): whether to print progress
+        - datapath (str): path to the whitespace-separated data file
+        - star_name (str): identifier used in the output dict
+        - star_type (str): spectral type, one of F, G, K, ME, MM
+        - add_prefix (bool): add 2400000 to JD if the file uses truncated Julian dates
+        - error_percent (float): assumed percentage measurement error on S-index
+        - sigma_upper_mult (float): upper bound on sigma as a multiple of the training std
+        - q_bounds_in (tuple): (lower, upper) Q bounds for underdamped SHO terms
+        - n_target_windows (int): target number of train/valid splits
+        - min_gap (float): minimum gap in days between observations after downsampling
+        - n_walkers (int): number of emcee walkers
+        - total_sample_count (int): total MCMC steps per run
+        - subsample (int): number of MCMC draws to retain for prediction
+        - SEED (int): random seed
+        - pred_forward_years (float): minimum years to predict beyond the training data
+        - low_cad / high_cad (float): day spacing for the near/far prediction grid
+        - direct_bound_tol / sm2016_bound_tol / mean_bound_tol (float): prior bound tolerances
+        - require_mid (bool): if True, discard kernel combos without a mid-range term
+        - valid_metric (str): 'CRPS' or 'NLPD', used for model selection
+        - verbose (bool): whether to print progress
 
     Out:
-        result (dict): nested structure with keys
+        - result (dict): nested structure with keys
             star, n_obs, span_years, skipped, skip_reason
             splits (list of dicts), each with keys
                 best_combo, valid_metric_value, rho_mid_years, Q_mid,
@@ -428,10 +428,10 @@ def results_to_df(results_list):
     Skipped stars are excluded.
 
     In:
-        results_list (list of dicts): output of star_window_analysis(), one entry per star
+        - results_list (list of dicts): output of star_window_analysis(), one entry per star
 
     Out:
-        df (DataFrame): one row per (star, split, lookahead window) with columns
+        - df (DataFrame): one row per (star, split, lookahead window) with columns
             star, n_obs, span_years, split_idx, best_combo, rho_mid_years, Q_mid,
             n_cycles_obs, is_const, aleatoric_frac_at_t0, valid_metric_value,
             lookahead_years, t0_year, gpr_med, gpr_lb68, gpr_ub68, gpr_lb95, gpr_ub95,
@@ -472,29 +472,29 @@ def run_star(datapath, star_name, star_type='G', add_prefix=False,
     *THIS CREATES FORWARD PREDICTIONS FOR THE LOOKAHEAD YEARS*
     
     In:
-        datapath (str): path to the data file
-        star_name (str): identifier used in plot titles
-        star_type (str): spectral type, one of F, G, K, ME, MM
-        add_prefix (bool): add 2400000 to JD if the file uses truncated Julian dates
-        error_percent (float): assumed percentage measurement error on S-index
-        sigma_upper_mult (float): upper bound on sigma as a multiple of the training std
-        q_bounds_in (tuple): (lower, upper) Q bounds for underdamped SHO terms
-        min_gap (float): minimum gap in days between observations after downsampling
-        n_walkers (int): number of emcee walkers
-        total_sample_count (int): total MCMC steps
-        subsample (int): number of MCMC draws to retain for prediction
-        SEED (int): random seed
-        pred_forward_years (float): minimum years to predict beyond the training data
-        high_cad (float): day spacing for the prediction grid
-        direct_bound_tol / sm2016_bound_tol / mean_bound_tol (float): prior bound tolerances
-        require_mid (bool): if True, discard kernel combos without a mid-range term
-        valid_metric (str): 'CRPS' or 'NLPD', used for model selection
-        lookahead_years (float or array): lookahead window(s) to evaluate in years
-        verbose (bool): whether to print progress
-        plot (bool): whether to plot the GPR predictions and best-in-x markers
+        - datapath (str): path to the data file
+        - star_name (str): identifier used in plot titles
+        - star_type (str): spectral type, one of F, G, K, ME, MM
+        - add_prefix (bool): add 2400000 to JD if the file uses truncated Julian dates
+        - error_percent (float): assumed percentage measurement error on S-index
+        - sigma_upper_mult (float): upper bound on sigma as a multiple of the training std
+        - q_bounds_in (tuple): (lower, upper) Q bounds for underdamped SHO terms
+        - min_gap (float): minimum gap in days between observations after downsampling
+        - n_walkers (int): number of emcee walkers
+        - total_sample_count (int): total MCMC steps
+        - subsample (int): number of MCMC draws to retain for prediction
+        - SEED (int): random seed
+        - pred_forward_years (float): minimum years to predict beyond the training data
+        - high_cad (float): day spacing for the prediction grid
+        - direct_bound_tol / sm2016_bound_tol / mean_bound_tol (float): prior bound tolerances
+        - require_mid (bool): if True, discard kernel combos without a mid-range term
+        - valid_metric (str): 'CRPS' or 'NLPD', used for model selection
+        - lookahead_years (float or array): lookahead window(s) to evaluate in years
+        - verbose (bool): whether to print progress
+        - plot (bool): whether to plot the GPR predictions and best-in-x markers
 
     Out:
-        result (dict): keys
+        - result (dict): keys
             preds (ndarray): shape (subsample, n_times) MCMC prediction draws
             sampled_years (ndarray): shape (n_times,) year grid for predictions
             best_in_x (dict): keyed by lookahead value; each entry is {med, lb, ub} in years
