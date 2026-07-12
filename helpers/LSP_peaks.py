@@ -18,15 +18,15 @@ def check_aliases(freq, accepted_freqs, tol = 0.05):
     They are noise and have to be removed.
 
     In:  
-        freq (float): the candidate frequency in days
-        accepted_freqs (list of floats): reference frequencies
-        tol (float): fractional tolerance 
+        - freq (float): the candidate frequency in days
+        - accepted_freqs (list of floats): reference frequencies
+        - tol (float): fractional tolerance 
         
     Out: 
-        not_alias (bool): True if the frequency is not an alias and should be considered for acceptance
-        aliased_period (float): the period for which the candidate period is an alias; None if not an alias
-        alial_multiplier (float): the concomitant multiple
-        delta_float (float): the tolerance by which this was identified as an alias
+        - not_alias (bool): True if the frequency is not an alias and should be considered for acceptance
+        - aliased_period (float): the period for which the candidate period is an alias; None if not an alias
+        - alial_multiplier (float): the concomitant multiple
+        - delta_float (float): the tolerance by which this was identified as an alias
     '''
     accepted_periods = 1/np.array(accepted_freqs) # Check in period space
     for p in accepted_periods:
@@ -43,13 +43,13 @@ def check_windows(freq, tol = 0.05):
     (e.g. yearly, monthly, weekly, or lunar periods).
 
     In:
-        freq (float): the candidate frequency in days
-        tol (float): the fractional tolerance 
+        - freq (float): the candidate frequency in days
+        - tol (float): the fractional tolerance 
 
     Out: 
-        not_window (bool): True if the frequency does not match any window and should be kept
-        matched_window_days (float): The window is has been matched to; None of not a window
-        delta (float): The tolerance by which the matching is made; None if not a window
+        - not_window (bool): True if the frequency does not match any window and should be kept
+        - matched_window_days (float): The window is has been matched to; None of not a window
+        - delta (float): The tolerance by which the matching is made; None if not a window
 
     '''
     # Times
@@ -70,14 +70,14 @@ def gaussian(t, A, mu, std, c):
     Evaluates a Gaussian with a vertical offset.
 
     In:  
-        t (array of floats): the x axis
-        A (float): Gaussian amplitude
-        mu (float): the centre of the Gaussian in t-space
-        std (float): Gaussian standard deviation
-        c (float): y axis offset
+        - t (array of floats): the x axis
+        - A (float): Gaussian amplitude
+        - mu (float): the centre of the Gaussian in t-space
+        - std (float): Gaussian standard deviation
+        - c (float): y axis offset
 
     Out: 
-        Array of Gaussian values evaluated at t (array of floats)
+        - Array of Gaussian values evaluated at t (array of floats)
     '''
     return A * np.exp(-0.5 * ((t - mu) / std)**2) + c
 
@@ -88,17 +88,17 @@ def find_snr(powers, freqs, peak_freq, peak_idx, peak_height, window = 150):
     Gaussian fits because median will be higher than the residual noise std.
 
     In:  
-        powers (array of floats): the powers of the LSP
-        freqs (array of floats): the frequency x axis of the LSP
-        peak_freq (float): frequency of the peak considered; used as mu initial guess
-        peak_idx (int): array index of peak for window to be defined
-        peak_height (float): LSP power at the peak; used as amplitude initial guess
-        window (int): half-width of fitted region in indices
+        - powers (array of floats): the powers of the LSP
+        - freqs (array of floats): the frequency x axis of the LSP
+        - peak_freq (float): frequency of the peak considered; used as mu initial guess
+        - peak_idx (int): array index of peak for window to be defined
+        - peak_height (float): LSP power at the peak; used as amplitude initial guess
+        - window (int): half-width of fitted region in indices
 
     Out:
-        snr (float): the calculated signal-to-noise ratio
-        popt (array of floats): the fit; None if fit failed
-        resid_lsp (array of floats): the residual LSPs; None of fit failed
+        - snr (float): the calculated signal-to-noise ratio
+        - popt (array of floats): the fit; None if fit failed
+        - resid_lsp (array of floats): the residual LSPs; None of fit failed
     '''
     # Define a window around the peak to which to fit a Gaussian
     n = len(powers)
@@ -137,11 +137,11 @@ def build_design_matrix(t, accepted_freqs):
     with a constant offset. Each frequency contributes a cos and sin column.
 
     In:
-        t (array of floats): the time axis in days
-        accepted_freqs (list of floats): the accepted frequencies in cycles/day
+        - t (array of floats): the time axis in days
+        - accepted_freqs (list of floats): the accepted frequencies in cycles/day
 
     Out:
-        X (ndarray): design matrix of shape (n_obs, 1 + 2*n_freqs)
+        - X (ndarray): design matrix of shape (n_obs, 1 + 2*n_freqs)
     """
     # Column of just ones for the offset component
     cols = [np.ones(len(t))]
@@ -158,13 +158,13 @@ def simultaneous_fit(t, y, accepted_freqs):
     for the next LSP iteration.
 
     In:
-        t (array of floats): the time axis in days
-        y (array of floats): the S-index values
-        accepted_freqs (list of floats): the accepted frequencies in cycles per day
+        - t (array of floats): the time axis in days
+        - y (array of floats): the S-index values
+        - accepted_freqs (list of floats): the accepted frequencies in cycles per day
 
     Out:
-        residuals (array of floats): y minus the simultaneous fit
-        params (array of floats): fitted coefficients [offset, cos1, sin1, ...]
+        - residuals (array of floats): y minus the simultaneous fit
+        - params (array of floats): fitted coefficients [offset, cos1, sin1, ...]
     """
     if not accepted_freqs:
         # If no frequencies yet, residuals are just the original data
@@ -187,11 +187,11 @@ def set_period_axes(ax, ylabel='Normalised Power'):
     Adds a secondary x-axis in years (top) to a matplotlib axis whose primary x-axis is in days (bottom).
 
     In:
-        ax (matplotlib Axes): axis with period in days on the x-axis
-        ylabel (str): label for the y-axis
+        - ax (matplotlib Axes): axis with period in days on the x-axis
+        - ylabel (str): label for the y-axis
 
     Out:
-        None
+        - None
     '''
     ax2 = ax.secondary_xaxis('top', functions=(lambda d: d / 365.25, lambda y: y * 365.25))
     ax2.set_xlabel('Period (years)')
@@ -211,19 +211,19 @@ def fit_peaks(df,
     before the next LSP is computed.
 
     In:
-        df (DataFrame): training dataframe with 'day' and 'sind' columns
-        manual_freq (str or None): 'linear', 'log', or None for astropy autopower
-        period_range (list): [min, max] period in days for the frequency grid
-        n_periods (int): number of frequency grid points
-        FAPs (list of floats): false alarm probability levels to be considered as percentages
-        key_FAP_idx (int): index into FAPs giving the detection threshold
-        threshold (float): minimum SNR required to accept a peak
-        plot (bool): whether to plot the LSP at each iteration
-        verbose (bool): whether to print accepted/rejected peak info
+        - df (DataFrame): training dataframe with 'day' and 'sind' columns
+        - manual_freq (str or None): 'linear', 'log', or None for astropy autopower
+        - period_range (list): [min, max] period in days for the frequency grid
+        - n_periods (int): number of frequency grid points
+        - FAPs (list of floats): false alarm probability levels to be considered as percentages
+        - key_FAP_idx (int): index into FAPs giving the detection threshold
+        - threshold (float): minimum SNR required to accept a peak
+        - plot (bool): whether to plot the LSP at each iteration
+        - verbose (bool): whether to print accepted/rejected peak info
 
     Out:
-        accepted_peak_periods (array of floats): accepted periods in days
-        accepted_peak_heights (array of floats): LSP power at each accepted period
+        - accepted_peak_periods (array of floats): accepted periods in days
+        - accepted_peak_heights (array of floats): LSP power at each accepted period
     '''
     accepted_peak_freqs = [] # We will work in frequency space for the analysis other than for the plotting. It is easier for the SNR fitting.
     accepted_peak_heights = [] # The concomitant power heights
