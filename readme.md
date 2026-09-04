@@ -9,7 +9,7 @@ Exoplanets are detected by the radial velocity or transit methods, which rely on
 
 This project has produced a scalable pipeline which creates these forecasts. The code for this pipeline lives in the helpers module.
 
-The executive summary and full report describing this work is found in the Results folder.
+The executive summary and full report describing this work is found in the Report folder.
 
 ## Repository Structure
 ---
