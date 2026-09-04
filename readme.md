@@ -250,7 +250,7 @@ It was used to:
     - Help rephrase unwieldy sentences: "how can I make this sentence flow better?"
     - Help with generating the repository structure section in the readme.md. 
     - Help wrapping code for use in HPC: "how could I write this for HPC use?"
-    - Help identify test cases for continuous integration: "what should I test in xyz function and how could I do that?"
+    - Help identify missing test cases for continuous integration: "what should I test in xyz function and how could I do that?"
     - Standardising docstring formatting.
 
 I would like to emphasise that the analysis, algorithm design, and thought processes are  *my own*.  Model outputs were always reviewed and checked against literature. No generated response was incorporated into the work without thorough verification.
